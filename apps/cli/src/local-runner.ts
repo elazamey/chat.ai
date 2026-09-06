@@ -29,6 +29,7 @@ import { VerificationEngine } from '@aok/verification';
 import { MockProvider, ModelRouter } from '@aok/models';
 import { InMemoryVault } from '@aok/vault';
 import { NoopBillingAdapter } from '@aok/billing';
+import { ImmuneRuntime, type Principal } from '@aok/immune';
 
 /** وضع التشغيل (ECONOMIC PRINCIPLE 002/004): local = أولوية، cloud = تبديل adapters فقط. */
 export type RunMode = 'local' | 'cloud';
@@ -110,6 +111,8 @@ export class LocalRunner {
   readonly mockProvider = new MockProvider();
   readonly router = new ModelRouter([this.mockProvider]);
   readonly vault = new InMemoryVault();
+  /** الجهاز المناعي — القاعدة الذهبية: كل خطوة تمر عبر Immune Gate قبل التنفيذ. */
+  readonly immune: ImmuneRuntime;
 
   private policy: PolicyEngine;
   private quota: BudgetQuota;
@@ -125,6 +128,7 @@ export class LocalRunner {
     this.onApprovalRequired = opts.onApprovalRequired;
     this.billing = opts.billing ?? new NoopBillingAdapter();
     this.capabilityGuard = opts.capabilityGuard;
+    this.immune = new ImmuneRuntime({ ledger: this.ledger });
   }
 
   registerExecutor(action: string, executor: CapabilityExecutor): void {
@@ -197,6 +201,33 @@ export class LocalRunner {
         break;
       }
 
+      // Immune Gate — القاعدة الذهبية: Agent → Immune → Policy → Execution
+      const immuneDecision = this.immune.evaluate({
+        principal: this.principalFor(actorId),
+        capability: action as Capability,
+        scope: '*',
+      });
+      if (!immuneDecision.allowed) {
+        this.ledger.append({
+          actor: systemActor,
+          type: 'ImmuneBlocked',
+          taskId,
+          runId,
+          payload: {
+            action,
+            level: immuneDecision.level,
+            immuneAction: immuneDecision.action,
+            reasons: immuneDecision.reasons,
+          },
+        });
+        results.push({
+          status: 'failure',
+          output: { error: `immune ${immuneDecision.action}: ${immuneDecision.reasons.join('; ')}` },
+          evidence: [],
+        });
+        continue;
+      }
+
       const ctx = createExecutionContext({
         runId,
         actorId,
@@ -265,6 +296,11 @@ export class LocalRunner {
 
   private capabilitiesFor(action: Capability): CapabilitySpec[] {
     return [{ id: `${action}@*`, action, scope: '*', constraints: [] }];
+  }
+
+  private principalFor(actorId: string): Principal {
+    // الوكيل المهيأ بواسطة الـrunner: هوية معلنة، ثقة VERIFIED (ليست UNKNOWN→privileged).
+    return { id: actorId, type: 'agent', trust: 'VERIFIED', credentials: [] };
   }
 
   private resolveInput(step: RunStep, results: Result[]): unknown {

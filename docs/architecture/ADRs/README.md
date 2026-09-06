@@ -28,3 +28,4 @@
 | 0024 | [Economic Kernel + BYOK + Mock](./ADR-0024-economic-kernel-byok.md) | Metering/Quota في النواة، Billing خارجها |
 | 0025 | [GitHub كـplugin خارجي + Namespace/Schema Registry](./ADR-0025-github-plugin-registry.md) | M2: الحدود الخارجية دون كسر الذرية |
 | 0026 | [Digital Ownership & Provenance Layer](./ADR-0026-ownership-provenance.md) | 6 عقود عليا + Genesis + Ownership Ledger + prove |
+| 0027 | [Digital Immune System (Immune Core)](./ADR-0027-immune-system.md) | 7 أعضاء + Immune Gate/Runtime + 12 IMMUNE PRINCIPLES |

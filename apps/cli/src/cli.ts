@@ -3,6 +3,7 @@
  * celia — واجهة CLI من الدرجة الأولى (ADR-0014).
  * MVP: mode / run / ledger / tools / models — بدون أي تبعية خارجية.
  */
+import { ImmuneRuntime } from '@aok/immune';
 import { LocalRunner } from './local-runner';
 import { buildOwnershipProof } from './ownership-prove';
 
@@ -14,6 +15,29 @@ async function main(): Promise<void> {
     case 'mode':
       console.log(`CELIA_MODE=${process.env.CELIA_MODE === 'cloud' ? 'cloud' : 'local'}`);
       return;
+
+    case 'health': {
+      const h = runner.immune.healthSnapshot();
+      const m = runner.immune.metrics.compute();
+      console.log(JSON.stringify({ ...h, metrics: m }, null, 2));
+      return;
+    }
+
+    case 'safe-mode': {
+      const immune = new ImmuneRuntime({ safeMode: true });
+      const h = immune.healthSnapshot();
+      console.log(`safe-mode: ${immune.isSafeMode ? 'ON' : 'OFF'} (level ${h.level})`);
+      console.log('posture: read-only · no external network · no deployments · no secrets · no plugin install · no writes');
+      return;
+    }
+
+    case 'emergency-lock': {
+      const immune = new ImmuneRuntime({ emergencyLock: true });
+      console.log(`emergency-lock: ${immune.isEmergencyLock ? 'ENGAGED' : 'OFF'} (level ${immune.level})`);
+      console.log('posture: STOP — ledger preservation · evidence capture · credential revocation · runner isolation');
+      console.log('exit requires an independent authorization (not available in this shell)');
+      return;
+    }
 
     case 'models':
       console.log(runner.router.discover().map((m) => `${m.providerId}/${m.id} ($${m.costPer1kInputUsd}/1k)`).join('\n'));
@@ -60,7 +84,7 @@ async function main(): Promise<void> {
       return;
 
     default:
-      console.log('usage: celia <mode|run|ledger|tools|models|runner|ownership prove>');
+      console.log('usage: celia <mode|run|ledger|tools|models|runner|health|safe-mode|emergency-lock|ownership prove>');
   }
 }
 

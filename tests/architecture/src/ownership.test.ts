@@ -70,7 +70,7 @@ describe('Ownership Tests', () => {
     expect(contributing).toContain('Developer Certificate of Origin');
   });
 
-  it('the six top contracts exist', () => {
+  it('the seven top contracts exist', () => {
     const contracts = [
       'KERNEL_CONSTITUTION.md',
       'ATOMIC_KERNEL_CONTRACT.md',
@@ -78,6 +78,7 @@ describe('Ownership Tests', () => {
       'SECURITY_CONTRACT.md',
       'OWNERSHIP_CONTRACT.md',
       'PROVENANCE_CONTRACT.md',
+      'IMMUNE_SYSTEM_CONTRACT.md',
     ];
     for (const c of contracts) {
       expect(existsSync(join(REPO_ROOT, 'docs', c)), `${c} must exist`).toBe(true);

@@ -27,6 +27,7 @@
     "@aok/vault": "workspace:*",
     "@aok/billing": "workspace:*",
     "@aok/provenance": "workspace:*",
+    "@aok/immune": "workspace:*",
     "yaml": "^2.5.0"
   }
 }

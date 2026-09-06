@@ -271,22 +271,18 @@ before requiring material infrastructure spend.
 
 ---
 
-## التسلسل الهرمي للوثائق — العقود العليا الستة
+## التسلسل الهرمي للوثائق — العقود العليا السبعة
 
 ```text
                  CONSTITUTION
                       │
-          ┌───────────┼───────────┐
-          ▼           ▼           ▼
-       KERNEL      SECURITY    OWNERSHIP
-          │           │           │
-          │           │       PROVENANCE
-          │           │           │
-          └───────────┼───────────┘
-                      ▼
-                 EXECUTION
+   ┌──────────┬───────┼───────────┬────────────┐
+   ▼          ▼       ▼           ▼            ▼
+SECURITY   OWNERSHIP ECONOMICS PROVENANCE   IMMUNE
+   │          │       │           │            │
+   └──────────┴───────┴───────────┴────────────┘
                       │
-                 ECONOMICS
+                ATOMIC KERNEL
 ```
 
 ```text
@@ -296,10 +292,28 @@ before requiring material infrastructure spend.
 04 SECURITY_CONTRACT.md          (العقد الأمني)
 05 OWNERSHIP_CONTRACT.md         (عقد الملكية — Digital Ownership Layer)
 06 PROVENANCE_CONTRACT.md        (عقد المصدر والأصل — proof bundle + genesis hash)
+07 IMMUNE_SYSTEM_CONTRACT.md     (عقد الجهاز المناعي — Detect/Decide/Isolate/Recover/Verify/Learn)
         ↓
 ARCHITECTURE_CONTRACT_V1.md      (عقد النظام الشامل — مرجع العقود/APIs)
         ↓
 ADRs + architecture/CONSTITUTION.md + BRAND_POLICY/ASSET_REGISTER/INVENTORSHIP (السجلات)
 ```
 
-*كل قاعدة هنا لها اختبار معماري في `tests/architecture/` (بما فيها Ownership Tests).*
+### مبادئ المناعة الإضافية (IMMUNE PRINCIPLES 001–012)
+
+```text
+IMMUNE PRINCIPLE 001 — No privileged action bypasses immune policy.
+IMMUNE PRINCIPLE 002 — Unknown components start with minimum trust.
+IMMUNE PRINCIPLE 003 — Security failure defaults to safe isolation.
+IMMUNE PRINCIPLE 004 — The LLM cannot disable or modify immune policy.
+IMMUNE PRINCIPLE 005 — Every incident produces immutable evidence.
+IMMUNE PRINCIPLE 006 — Every external boundary has a circuit breaker.
+IMMUNE PRINCIPLE 007 — Every execution has a bounded blast radius.
+IMMUNE PRINCIPLE 008 — Recovery requires verification.
+IMMUNE PRINCIPLE 009 — A recovered system is not trusted until integrity passes.
+IMMUNE PRINCIPLE 010 — Memory and external content are untrusted by default.
+IMMUNE PRINCIPLE 011 — Automatic remediation cannot expand privilege.
+IMMUNE PRINCIPLE 012 — The immune subsystem itself must be observable and testable.
+```
+
+*كل قاعدة هنا لها اختبار معماري في `tests/architecture/` (بما فيها Ownership Tests و Immune Tests).*

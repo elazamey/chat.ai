@@ -119,3 +119,24 @@ describe('LocalRunner — Namespace + Schema Registry guard (no admin.superpower
     expect(outcome.ledger.map((e) => e.type)).toContain('CapabilityRejected');
   });
 });
+
+describe('LocalRunner — Immune Gate (golden rule: every action passes through the gate)', () => {
+  it('exposes the Immune Gate and blocks an unknown principal requesting secrets', () => {
+    const runner = buildRunner();
+    const d = runner.immune.evaluate({
+      principal: { id: 'intruder', type: 'agent', trust: 'UNKNOWN', credentials: [] },
+      capability: 'secret.read',
+    });
+    expect(d.allowed).toBe(false);
+    expect(d.action).toBe('block');
+  });
+
+  it('lets a normal verified agent pass (no false positives on benign runs)', () => {
+    const runner = buildRunner();
+    const d = runner.immune.evaluate({
+      principal: { id: 'coder', type: 'agent', trust: 'VERIFIED', credentials: [] },
+      capability: 'repo.read',
+    });
+    expect(d.allowed).toBe(true);
+  });
+});

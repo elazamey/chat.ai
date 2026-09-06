@@ -53,6 +53,9 @@ importers:
       '@aok/github':
         specifier: workspace:*
         version: link:../../plugins/tools/github
+      '@aok/immune':
+        specifier: workspace:*
+        version: link:../../kernel/immune
       '@aok/models':
         specifier: workspace:*
         version: link:../../plugins/models
@@ -104,6 +107,18 @@ importers:
       '@aok/contracts':
         specifier: workspace:*
         version: link:../contracts
+
+  kernel/immune:
+    dependencies:
+      '@aok/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@aok/events':
+        specifier: workspace:*
+        version: link:../events
+      '@aok/transition':
+        specifier: workspace:*
+        version: link:../transition
 
   kernel/policy:
     dependencies:

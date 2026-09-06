@@ -50,8 +50,8 @@ describe('RULE: dependency direction (contracts ← kernel ← runtime ← plugi
 describe('RULE 001/002: kernel must not know agents, tools, models, memory, verification, vault, github', () => {
   const forbidden = ['@aok/agents', '@aok/tools', '@aok/models', '@aok/memory', '@aok/verification', '@aok/vault', '@aok/github'];
 
-  it('kernel + runtime source never imports plugins/adapters', () => {
-    const scoped = [...LAYERS.kernel, ...LAYERS.runtime];
+  it('kernel + immune + runtime source never imports plugins/adapters', () => {
+    const scoped = [...LAYERS.kernel, ...LAYERS.immune, ...LAYERS.runtime];
     for (const dir of scoped) {
       for (const file of walk(join(REPO_ROOT, dir))) {
         const src = readFileSync(file, 'utf8');
@@ -63,8 +63,8 @@ describe('RULE 001/002: kernel must not know agents, tools, models, memory, veri
     }
   });
 
-  it('kernel/runtime packages depend only on internal @aok packages (contracts or kernel)', () => {
-    for (const dir of [...LAYERS.kernel, ...LAYERS.runtime]) {
+  it('kernel/immune/runtime packages depend only on internal @aok packages (contracts or kernel)', () => {
+    for (const dir of [...LAYERS.kernel, ...LAYERS.immune, ...LAYERS.runtime]) {
       for (const dep of workspaceDepsOf(join(REPO_ROOT, dir))) {
         const depLayer = packageNameToLayer(dep);
         expect(
@@ -114,8 +114,8 @@ describe('ECONOMIC PRINCIPLE 001: the kernel must operate without a paid depende
     '@google/generative-ai',
   ];
 
-  it('kernel + runtime packages depend on no paid-service SDK (internal @aok only)', () => {
-    for (const dir of [...LAYERS.kernel, ...LAYERS.runtime]) {
+  it('kernel + immune + runtime packages depend on no paid-service SDK (internal @aok only)', () => {
+    for (const dir of [...LAYERS.kernel, ...LAYERS.immune, ...LAYERS.runtime]) {
       const deps = workspaceDepsOf(join(REPO_ROOT, dir));
       for (const dep of deps) {
         expect(PAID_VENDOR_SDKS, `${dir} must not depend on paid SDK`).not.toContain(dep);
@@ -141,8 +141,8 @@ describe('ECONOMIC PRINCIPLE 005/007: metering+quota in kernel, billing outside'
 });
 
 describe('ATOMICITY PRINCIPLE 011: GitHub is an external plugin — ZERO kernel knowledge', () => {
-  it('kernel/runtime never import @aok/github or any github SDK', () => {
-    for (const dir of [...LAYERS.kernel, ...LAYERS.runtime]) {
+  it('kernel/immune/runtime never import @aok/github or any github SDK', () => {
+    for (const dir of [...LAYERS.kernel, ...LAYERS.immune, ...LAYERS.runtime]) {
       for (const file of walk(join(REPO_ROOT, dir))) {
         const src = readFileSync(file, 'utf8');
         expect(src, `${relative(REPO_ROOT, file)} imports @aok/github`).not.toMatch(
@@ -155,8 +155,8 @@ describe('ATOMICITY PRINCIPLE 011: GitHub is an external plugin — ZERO kernel 
     }
   });
 
-  it('kernel/runtime package.json declare no @aok/github dependency', () => {
-    for (const dir of [...LAYERS.kernel, ...LAYERS.runtime]) {
+  it('kernel/immune/runtime package.json declare no @aok/github dependency', () => {
+    for (const dir of [...LAYERS.kernel, ...LAYERS.immune, ...LAYERS.runtime]) {
       for (const dep of workspaceDepsOf(join(REPO_ROOT, dir))) {
         expect(dep, `${dir} must not depend on @aok/github`).not.toBe('@aok/github');
       }
