@@ -16,3 +16,10 @@
 | 0012 | [MCP كـAdapter](./ADR-0012-mcp-adapter.md) | MCP integration protocol وليس foundation |
 | 0013 | [PostgreSQL أساسي + Redis غير إلزامي](./ADR-0013-postgres-redis.md) | Postgres إنتاج، SQLite dev |
 | 0014 | [CLI أولوية + Vertical Slice MVP](./ADR-0014-cli-vertical-slice.md) | celia CLI + سيناريو end-to-end |
+| 0015 | [النواة الذرية: البدائيات الأربعة + Ontology-Neutral](./ADR-0015-atomic-kernel-primitives.md) | Entity/Event/Capability/Result + execute() موحد |
+| 0016 | [التنفيذ الموحّد execute() + CapabilityExecutor](./ADR-0016-unified-execute.md) | نقطة تنفيذ واحدة للجميع |
+| 0017 | [الـAgent = Composition](./ADR-0017-agent-composition.md) | Agent = Policy+Model+Memory+Planner+Capabilities+Runtime |
+| 0018 | [الحالة Projection](./ADR-0018-state-as-projection.md) | state = replay(events)؛ الـLedger هو الحقيقة |
+| 0019 | [Capability Composition](./ADR-0019-capability-composition.md) | الانشطارية الرسمية: compose() |
+| 0020 | [اتجاه التبعية + Architecture Tests](./ADR-0020-dependency-direction-tests.md) | القانون مفروض بالكود |
+| 0021 | [شكل المستودع](./ADR-0021-repo-layout.md) | kernel/runtime/plugins/adapters/storage |

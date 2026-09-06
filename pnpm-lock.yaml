@@ -18,83 +18,104 @@ importers:
         specifier: ^2.1.9
         version: 2.1.9(@types/node@20.19.43)
 
-  packages/agents:
+  adapters/vault:
+    dependencies:
+      '@aok/contracts':
+        specifier: workspace:*
+        version: link:../../kernel/contracts
+
+  kernel/capability:
     dependencies:
       '@aok/contracts':
         specifier: workspace:*
         version: link:../contracts
+
+  kernel/contracts:
+    dependencies:
       zod:
         specifier: ^3.23.8
         version: 3.25.76
 
-  packages/contracts:
+  kernel/events:
     dependencies:
+      '@aok/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+
+  kernel/execution:
+    dependencies:
+      '@aok/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+
+  kernel/policy:
+    dependencies:
+      '@aok/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+
+  kernel/transition:
+    dependencies:
+      '@aok/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+
+  plugins/agents:
+    dependencies:
+      '@aok/contracts':
+        specifier: workspace:*
+        version: link:../../kernel/contracts
       zod:
         specifier: ^3.23.8
         version: 3.25.76
 
-  packages/kernel:
+  plugins/memory:
     dependencies:
       '@aok/contracts':
         specifier: workspace:*
-        version: link:../contracts
+        version: link:../../kernel/contracts
 
-  packages/ledger:
+  plugins/models:
     dependencies:
       '@aok/contracts':
         specifier: workspace:*
-        version: link:../contracts
+        version: link:../../kernel/contracts
 
-  packages/memory:
+  plugins/tools:
     dependencies:
       '@aok/contracts':
         specifier: workspace:*
-        version: link:../contracts
-
-  packages/models:
-    dependencies:
-      '@aok/contracts':
-        specifier: workspace:*
-        version: link:../contracts
-
-  packages/policy:
-    dependencies:
-      '@aok/contracts':
-        specifier: workspace:*
-        version: link:../contracts
-
-  packages/sandbox:
-    dependencies:
-      '@aok/contracts':
-        specifier: workspace:*
-        version: link:../contracts
-
-  packages/scheduler:
-    dependencies:
-      '@aok/contracts':
-        specifier: workspace:*
-        version: link:../contracts
-
-  packages/security:
-    dependencies:
-      '@aok/contracts':
-        specifier: workspace:*
-        version: link:../contracts
-
-  packages/tools:
-    dependencies:
-      '@aok/contracts':
-        specifier: workspace:*
-        version: link:../contracts
+        version: link:../../kernel/contracts
       zod:
         specifier: ^3.23.8
         version: 3.25.76
 
-  packages/verification:
+  plugins/verification:
     dependencies:
       '@aok/contracts':
         specifier: workspace:*
-        version: link:../contracts
+        version: link:../../kernel/contracts
+
+  runtime/sandbox:
+    dependencies:
+      '@aok/contracts':
+        specifier: workspace:*
+        version: link:../../kernel/contracts
+
+  runtime/scheduler:
+    dependencies:
+      '@aok/contracts':
+        specifier: workspace:*
+        version: link:../../kernel/contracts
+
+  tests/architecture:
+    devDependencies:
+      '@types/node':
+        specifier: ^20.14.0
+        version: 20.19.43
+      typescript:
+        specifier: ^5.5.4
+        version: 5.9.3
 
 packages:
 

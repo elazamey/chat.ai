@@ -4,7 +4,7 @@ import type { LedgerEvent, LedgerEventDraft } from './events';
 import type { PolicyDecision } from './policy';
 import type { Claim } from './verification';
 
-/** واجهة كتابة الـLedger (ينفّذها @aok/ledger). */
+/** واجهة كتابة الـLedger (ينفّذها @aok/events). */
 export interface LedgerSink {
   append(draft: LedgerEventDraft): LedgerEvent;
 }

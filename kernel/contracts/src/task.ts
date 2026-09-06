@@ -1,6 +1,6 @@
 import type { Actor } from './actor';
 
-/** آلة حالة الـTask (C12): الانتقالات الفعلية في @aok/kernel. */
+/** آلة حالة الـTask (C12): الانتقالات الفعلية في @aok/transition. */
 export type TaskState =
   | 'PLANNED'
   | 'RUNNING'

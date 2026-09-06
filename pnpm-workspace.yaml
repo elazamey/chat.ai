@@ -1,3 +1,8 @@
 packages:
-  - 'packages/*'
   - 'apps/*'
+  - 'kernel/*'
+  - 'runtime/*'
+  - 'plugins/*'
+  - 'adapters/*'
+  - 'storage/*'
+  - 'tests/*'

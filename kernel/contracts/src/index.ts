@@ -1,4 +1,5 @@
 export * from './ids';
+export * from './primitives';
 export * from './actor';
 export * from './capabilities';
 export * from './policy';

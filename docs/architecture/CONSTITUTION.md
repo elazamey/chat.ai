@@ -1,7 +1,8 @@
-# الدستور الهندسي — Agent Operating Kernel (AOK)
+# القرارات الهندسية — Agent Operating Kernel (AOK)
 
-> **هذا المستند هو الدستور، وليس وثيقة تصميم.** هدفه منع القرارات قصيرة الأجل التي تقتل المنتج لاحقًا.
-> أي مخالفة له تُعتبر انحرافًا معماريًا يجب تبريره في ADR جديد قبل التنفيذ.
+> **⚠️ المرجع الأعلى هو [`KERNEL_CONSTITUTION.md`](../../KERNEL_CONSTITUTION.md) (دستور النواة الذرية + القواعد العشر).**
+> هذا المستند = سجل **القرارات الهندسية C1–C25** (التنفيذية). عند التعارض، دستور النواة هو الفيصل.
+> أي مخالفة تُعتبر انحرافًا معماريًا يجب تبريره في ADR جديد قبل التنفيذ.
 
 - **المصدر المرجعي التفصيلي:** [`ARCHITECTURE_CONTRACT_V1.md`](../../ARCHITECTURE_CONTRACT_V1.md)
 - **سجل القرارات (ADRs):** [`ADRs/`](./ADRs/)
@@ -203,13 +204,16 @@ Internal Tool Contract ↔ MCP Adapter ↔ External MCP Server
 ### C21 — Monorepo صغير (وليس 40 خدمة من البداية)
 
 ```text
-/apps       control-plane · cli · api
-/packages   contracts · kernel · policy · ledger · scheduler
-            tools · agents · models · memory · verification · sandbox · security
-/docs       architecture · ADRs
+apps/       api · cli · console
+kernel/     contracts · execution · capability · policy · transition · events
+runtime/    scheduler · sandbox (· orchestrator · workers)
+plugins/    agents · tools · models · memory · verification
+adapters/   vault (· github · mcp · cloud · databases)
+storage/    postgres · event-store · object-store
+tests/      architecture (· contracts · integration · e2e)
 ```
 
-الانفصال لخدمات منفصلة فقط عند وجود حاجة فعلية.
+الانفصال لخدمات منفصلة فقط عند وجود حاجة فعلية. (التفصيل: ADR-0021)
 
 ### C22 — قاعدة البيانات: PostgreSQL
 
