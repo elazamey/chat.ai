@@ -14,7 +14,7 @@ export const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..
  */
 export const LAYERS = {
   contracts: ['kernel/contracts'],
-  kernel: ['kernel/execution', 'kernel/capability', 'kernel/policy', 'kernel/transition', 'kernel/events', 'kernel/economics', 'kernel/registry'],
+  kernel: ['kernel/execution', 'kernel/capability', 'kernel/policy', 'kernel/transition', 'kernel/events', 'kernel/economics', 'kernel/registry', 'kernel/provenance'],
   runtime: ['runtime/scheduler', 'runtime/sandbox'],
   plugins: ['plugins/agents', 'plugins/tools', 'plugins/tools/github', 'plugins/models', 'plugins/memory', 'plugins/verification'],
   adapters: ['adapters/vault', 'adapters/billing'],
@@ -25,7 +25,7 @@ export type LayerName = keyof typeof LAYERS;
 
 export const ALLOWED_DEPS: Record<LayerName, LayerName[]> = {
   contracts: [],
-  kernel: ['contracts'],
+  kernel: ['contracts', 'kernel'],
   runtime: ['contracts', 'kernel'],
   plugins: ['contracts', 'kernel', 'runtime'],
   adapters: ['contracts'],

@@ -271,18 +271,35 @@ before requiring material infrastructure spend.
 
 ---
 
-## التسلسل الهرمي للوثائق
+## التسلسل الهرمي للوثائق — العقود العليا الستة
 
 ```text
-KERNEL_CONSTITUTION.md          (هذا — القانون الأعلى: القواعد العشر + المبادئ الاقتصادية العشرة)
-        ↓
-ATOMIC_KERNEL_CONTRACT.md       (عقد النواة الذرية — القانون التنفيذي)
-        ↓
-ZERO_COST_ECONOMIC_CONTRACT.md  (العقد الاقتصادي الصفري)
-        ↓
-ARCHITECTURE_CONTRACT_V1.md     (عقد النظام الشامل — مرجع العقود/APIs)
-        ↓
-ADRs + architecture/CONSTITUTION.md (سجل القرارات)
+                 CONSTITUTION
+                      │
+          ┌───────────┼───────────┐
+          ▼           ▼           ▼
+       KERNEL      SECURITY    OWNERSHIP
+          │           │           │
+          │           │       PROVENANCE
+          │           │           │
+          └───────────┼───────────┘
+                      ▼
+                 EXECUTION
+                      │
+                 ECONOMICS
 ```
 
-*كل قاعدة هنا لها اختبار معماري في `tests/architecture/`.*
+```text
+01 KERNEL_CONSTITUTION.md        (هذا — القانون الأعلى: القواعد العشر + الذرية + المبادئ الاقتصادية)
+02 ATOMIC_KERNEL_CONTRACT.md     (عقد النواة الذرية — القانون التنفيذي)
+03 ZERO_COST_ECONOMIC_CONTRACT.md(العقد الاقتصادي الصفري)
+04 SECURITY_CONTRACT.md          (العقد الأمني)
+05 OWNERSHIP_CONTRACT.md         (عقد الملكية — Digital Ownership Layer)
+06 PROVENANCE_CONTRACT.md        (عقد المصدر والأصل — proof bundle + genesis hash)
+        ↓
+ARCHITECTURE_CONTRACT_V1.md      (عقد النظام الشامل — مرجع العقود/APIs)
+        ↓
+ADRs + architecture/CONSTITUTION.md + BRAND_POLICY/ASSET_REGISTER/INVENTORSHIP (السجلات)
+```
+
+*كل قاعدة هنا لها اختبار معماري في `tests/architecture/` (بما فيها Ownership Tests).*

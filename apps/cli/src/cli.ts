@@ -4,6 +4,7 @@
  * MVP: mode / run / ledger / tools / models — بدون أي تبعية خارجية.
  */
 import { LocalRunner } from './local-runner';
+import { buildOwnershipProof } from './ownership-prove';
 
 async function main(): Promise<void> {
   const [command, ...args] = process.argv.slice(2);
@@ -46,8 +47,20 @@ async function main(): Promise<void> {
       console.log('celia runner install | connect | start');
       return;
 
+    case 'ownership':
+      if (args[0] === 'prove') {
+        const proof = buildOwnershipProof(process.cwd());
+        console.log(`genesis valid: ${proof.genesisValid}`);
+        console.log(`ledger chain valid: ${proof.chainValid}`);
+        console.log(`output: ${proof.outputDir}`);
+        for (const f of proof.files) console.log(`  - ${f}`);
+        return;
+      }
+      console.log('usage: celia ownership prove');
+      return;
+
     default:
-      console.log('usage: celia <mode|run|ledger|tools|models|runner>');
+      console.log('usage: celia <mode|run|ledger|tools|models|runner|ownership prove>');
   }
 }
 

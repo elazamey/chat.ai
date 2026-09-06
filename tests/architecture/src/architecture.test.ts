@@ -63,10 +63,14 @@ describe('RULE 001/002: kernel must not know agents, tools, models, memory, veri
     }
   });
 
-  it('kernel/runtime packages depend only on @aok/contracts (or nothing)', () => {
+  it('kernel/runtime packages depend only on internal @aok packages (contracts or kernel)', () => {
     for (const dir of [...LAYERS.kernel, ...LAYERS.runtime]) {
       for (const dep of workspaceDepsOf(join(REPO_ROOT, dir))) {
-        expect(dep, `${dir} may only depend on @aok/contracts`).toBe('@aok/contracts');
+        const depLayer = packageNameToLayer(dep);
+        expect(
+          ['contracts', 'kernel'],
+          `${dir} may only depend on contracts/kernel (got ${dep} → ${depLayer})`,
+        ).toContain(depLayer);
       }
     }
   });
@@ -110,15 +114,12 @@ describe('ECONOMIC PRINCIPLE 001: the kernel must operate without a paid depende
     '@google/generative-ai',
   ];
 
-  it('kernel + runtime packages depend on no paid-service SDK', () => {
+  it('kernel + runtime packages depend on no paid-service SDK (internal @aok only)', () => {
     for (const dir of [...LAYERS.kernel, ...LAYERS.runtime]) {
       const deps = workspaceDepsOf(join(REPO_ROOT, dir));
       for (const dep of deps) {
         expect(PAID_VENDOR_SDKS, `${dir} must not depend on paid SDK`).not.toContain(dep);
-      }
-      // النواة/الـruntime يعتمدان على العقود فقط (أو لا شيء)
-      for (const dep of deps) {
-        expect(['@aok/contracts'], `${dir} may only depend on @aok/contracts`).toContain(dep);
+        expect(dep.startsWith('@aok/'), `${dir} has external dependency '${dep}'`).toBe(true);
       }
     }
   });

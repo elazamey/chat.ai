@@ -1,0 +1,33 @@
+# CODEOWNERS — ملكية الأجزاء الحساسة (Least privilege)
+#
+# المالك الحالي: @elazamey (تُستبدل بـOrganization/Team عند إنشائها).
+# أي تغيير على هذه المناطق يتطلب مراجعة المالك قبل الدمج.
+
+# النواة والمناطق الحساسة — المالك فقط
+/kernel/**                @elazamey
+/kernel/contracts/**      @elazamey
+
+# الأمان والفوترة والأسرار
+/adapters/vault/**        @elazamey
+/adapters/billing/**      @elazamey
+
+# اختبارات العمارة (قوانين الدستور)
+/tests/architecture/**    @elazamey
+
+# العقود العليا + وثائق الملكية
+/docs/**                  @elazamey
+/docs/OWNERSHIP_CONTRACT.md  @elazamey
+/docs/PROVENANCE_CONTRACT.md @elazamey
+/docs/SECURITY_CONTRACT.md   @elazamey
+
+# الهوية والترخيص وسجل الغير
+/PROJECT_IDENTITY.yaml    @elazamey
+/PROJECT_GENESIS.md       @elazamey
+/LICENSE                  @elazamey
+/THIRD_PARTY_NOTICES.md   @elazamey
+/CODEOWNERS               @elazamey
+/.github/CODEOWNERS       @elazamey
+
+# سكربتات الحماية والمراقبة
+/scripts/gh-protect.sh    @elazamey
+/scripts/ownership-audit.sh @elazamey

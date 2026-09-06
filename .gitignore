@@ -20,6 +20,9 @@ pnpm-debug.log*
 # e2e evidence (generated, not committed)
 .e2e-artifacts/
 
+# ownership proof bundle (generated, not committed)
+ownership-proof/
+
 # editor / os
 .DS_Store
 .idea/

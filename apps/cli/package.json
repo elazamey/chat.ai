@@ -25,6 +25,8 @@
     "@aok/verification": "workspace:*",
     "@aok/models": "workspace:*",
     "@aok/vault": "workspace:*",
-    "@aok/billing": "workspace:*"
+    "@aok/billing": "workspace:*",
+    "@aok/provenance": "workspace:*",
+    "yaml": "^2.5.0"
   }
 }

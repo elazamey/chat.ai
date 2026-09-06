@@ -6,6 +6,10 @@
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "@aok/provenance": "workspace:*",
+    "yaml": "^2.5.0"
+  },
   "devDependencies": {
     "@types/node": "^20.14.0",
     "typescript": "^5.5.4"
