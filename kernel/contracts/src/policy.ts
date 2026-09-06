@@ -21,7 +21,7 @@ export interface PolicyDecision {
   reason: string;
 }
 
-export type ApprovalPolicy = Record<Capability, ApprovalRequirement>;
+export type ApprovalPolicy = Record<string, ApprovalRequirement>;
 
 /** السياسة الافتراضية (C13): read/edit → auto، push/delete/deploy/secret → approval. */
 export const DEFAULT_APPROVAL_POLICY: ApprovalPolicy = {

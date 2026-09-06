@@ -1,6 +1,10 @@
 /**
  * الصلاحيات الدقيقة (Capability-Based Security — ADR-0003).
  * لا يوجد "admin"; كل قدرة تُمنَح/تُرفَض على حدة عبر Policy Engine.
+ *
+ * ملاحظة ذرية: الفعل مفتوح (`Capability = string`) — فقدرات جديدة
+ * (github.pull_request.create، deploy.staging، research.search، …)
+ * لا تتطلب تعديل النواة. CAPABILITIES أدناه كتالوج مرجعي فقط.
  */
 export const CAPABILITIES = [
   'repo.read',
@@ -18,4 +22,4 @@ export const CAPABILITIES = [
   'db.query',
 ] as const;
 
-export type Capability = (typeof CAPABILITIES)[number];
+export type Capability = string;

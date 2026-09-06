@@ -15,7 +15,7 @@ plugins/    agents · tools · models · memory · verification
 adapters/   vault (· github · mcp · cloud · databases لاحقًا)
 storage/    postgres · event-store · object-store (لاحقًا)
 tests/      architecture (· contracts · integration · e2e لاحقًا)
-docs/       KERNEL_CONSTITUTION · ARCHITECTURE_CONTRACT_V2 · ADR/
+docs/       KERNEL_CONSTITUTION · ATOMIC_KERNEL_CONTRACT · ADR/
 ```
 
 ## النتائج

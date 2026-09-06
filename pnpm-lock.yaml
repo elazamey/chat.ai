@@ -18,11 +18,47 @@ importers:
         specifier: ^2.1.9
         version: 2.1.9(@types/node@20.19.43)
 
+  adapters/billing:
+    dependencies:
+      '@aok/contracts':
+        specifier: workspace:*
+        version: link:../../kernel/contracts
+
   adapters/vault:
     dependencies:
       '@aok/contracts':
         specifier: workspace:*
         version: link:../../kernel/contracts
+
+  apps/cli:
+    dependencies:
+      '@aok/billing':
+        specifier: workspace:*
+        version: link:../../adapters/billing
+      '@aok/contracts':
+        specifier: workspace:*
+        version: link:../../kernel/contracts
+      '@aok/economics':
+        specifier: workspace:*
+        version: link:../../kernel/economics
+      '@aok/events':
+        specifier: workspace:*
+        version: link:../../kernel/events
+      '@aok/execution':
+        specifier: workspace:*
+        version: link:../../kernel/execution
+      '@aok/models':
+        specifier: workspace:*
+        version: link:../../plugins/models
+      '@aok/policy':
+        specifier: workspace:*
+        version: link:../../kernel/policy
+      '@aok/vault':
+        specifier: workspace:*
+        version: link:../../adapters/vault
+      '@aok/verification':
+        specifier: workspace:*
+        version: link:../../plugins/verification
 
   kernel/capability:
     dependencies:
@@ -35,6 +71,12 @@ importers:
       zod:
         specifier: ^3.23.8
         version: 3.25.76
+
+  kernel/economics:
+    dependencies:
+      '@aok/contracts':
+        specifier: workspace:*
+        version: link:../contracts
 
   kernel/events:
     dependencies:

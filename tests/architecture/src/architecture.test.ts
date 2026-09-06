@@ -97,3 +97,58 @@ describe('RULE 004: every side effect produces an Event', () => {
     expect(src).toContain('append');
   });
 });
+
+describe('ECONOMIC PRINCIPLE 001: the kernel must operate without a paid dependency', () => {
+  const PAID_VENDOR_SDKS = [
+    'stripe',
+    'aws-sdk',
+    '@aws-sdk',
+    '@google-cloud',
+    '@azure',
+    'openai',
+    '@anthropic-ai',
+    '@google/generative-ai',
+  ];
+
+  it('kernel + runtime packages depend on no paid-service SDK', () => {
+    for (const dir of [...LAYERS.kernel, ...LAYERS.runtime]) {
+      const deps = workspaceDepsOf(join(REPO_ROOT, dir));
+      for (const dep of deps) {
+        expect(PAID_VENDOR_SDKS, `${dir} must not depend on paid SDK`).not.toContain(dep);
+      }
+      // النواة/الـruntime يعتمدان على العقود فقط (أو لا شيء)
+      for (const dep of deps) {
+        expect(['@aok/contracts'], `${dir} may only depend on @aok/contracts`).toContain(dep);
+      }
+    }
+  });
+});
+
+describe('ECONOMIC PRINCIPLE 005/007: metering+quota in kernel, billing outside', () => {
+  it('kernel measures and enforces (economics) without importing billing', () => {
+    const src = readFileSync(join(REPO_ROOT, 'kernel/economics/src/index.ts'), 'utf8');
+    expect(src).toContain('UsageMeter');
+    expect(src).toContain('QuotaPolicy');
+    expect(src).not.toContain('@aok/billing');
+  });
+
+  it('billing adapter depends only on contracts (external to the kernel)', () => {
+    for (const dep of workspaceDepsOf(join(REPO_ROOT, 'adapters/billing'))) {
+      expect(dep).toBe('@aok/contracts');
+    }
+  });
+});
+
+describe('ECONOMIC PRINCIPLE 009: BYOK + local models', () => {
+  it('model credentials hold a SecretRef, never a raw key (RULE 007)', () => {
+    const src = readFileSync(join(REPO_ROOT, 'plugins/models/src/provider.ts'), 'utf8');
+    expect(src).toContain('secretRef');
+    expect(src).toContain("kind: 'byok'");
+  });
+
+  it('a zero-cost deterministic mock model exists for CI/dev', () => {
+    const src = readFileSync(join(REPO_ROOT, 'plugins/models/src/provider.ts'), 'utf8');
+    expect(src).toContain('MockProvider');
+    expect(src).toContain('costPer1kInputUsd: 0');
+  });
+});

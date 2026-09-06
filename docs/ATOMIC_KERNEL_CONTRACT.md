@@ -1,14 +1,15 @@
-# ARCHITECTURE CONTRACT v2 — Atomic Kernel Contract
+# ATOMIC_KERNEL_CONTRACT v1 — عقد النواة الذرية
 
 > القانون التنفيذي للدستور ([`KERNEL_CONSTITUTION.md`](KERNEL_CONSTITUTION.md)).
 > هنا العقود الفعلية (interfaces) + قواعد التبعية + اختباراتها، بلا فلسفة زائدة.
+> الجانب الاقتصادي (Quota/Metering/BYOK/Runner): [`ZERO_COST_ECONOMIC_CONTRACT.md`](ZERO_COST_ECONOMIC_CONTRACT.md).
 
 | البند | القيمة |
 |---|---|
-| **الإصدار** | `v2.0.0-draft` |
+| **الإصدار** | `v1.0.0-draft` |
 | **الحالة** | `IMPLEMENTING` |
 | **المرجع الأعلى** | `KERNEL_CONSTITUTION.md` |
-| **الموقع** | `kernel/*` / `runtime/*` / `plugins/*` / `adapters/*` / `tests/architecture/*` |
+| **الموقع** | `kernel/*` / `runtime/*` / `plugins/*` / `adapters/*` / `apps/*` / `tests/architecture/*` |
 
 ---
 
@@ -63,6 +64,8 @@ async function execute(action, input, ctx, registry): Promise<Result>
 | EventStore | `{ append(events), all() }` + `Projection{fold}` | `kernel/events` |
 | VerificationEngine | `{ verify(target, checks) → Verification }` | `plugins/verification` |
 | CapabilityExecutor | `{ canExecute, execute }` | `kernel/execution` |
+| UsageMeter / QuotaPolicy / BudgetPolicy | `{ record, usage }` / `{ allows }` | `kernel/economics` |
+| BillingAdapter | `{ report(usage) }` — خارج النواة | `adapters/billing` |
 
 النواة تتعامل مع **interfaces فقط**؛ Gemini/OpenAI/Anthropic/Local كلها متساوية أمامها.
 
@@ -128,10 +131,11 @@ Contracts ← Kernel ← Runtime ← Plugins ← Adapters
 | الطبقة | الحزم | التبعيات المسموحة (@aok) |
 |---|---|---|
 | contracts | `kernel/contracts` | — |
-| kernel | `kernel/execution` `kernel/capability` `kernel/policy` `kernel/transition` `kernel/events` | `contracts` فقط |
+| kernel | `kernel/execution` `kernel/capability` `kernel/policy` `kernel/transition` `kernel/events` `kernel/economics` | `contracts` فقط |
 | runtime | `runtime/scheduler` `runtime/sandbox` | `contracts`, `kernel` |
 | plugins | `plugins/agents` `plugins/tools` `plugins/models` `plugins/memory` `plugins/verification` | `contracts`, `kernel`, `runtime` |
-| adapters | `adapters/vault` | `contracts` |
+| adapters | `adapters/vault` `adapters/billing` | `contracts` |
+| apps | `apps/cli` (LocalRunner + celia) | الكل (طبقة التركيب) |
 
 **ممنوع:** `kernel → agents`, `kernel → github`, `kernel → Gemini`, `agent يعدّل ledger مباشرة`, `tool يتجاوز policy`, `model يلمس filesystem`.
 
@@ -157,20 +161,24 @@ kernel/
   policy/       @aok/policy        Policy Engine (deny-precedence + approval)
   transition/   @aok/transition    آلات الحالة ككود + الـDAG
   events/       @aok/events        Ledger append-only + EventStore + Projections
+  economics/    @aok/economics     Metering + Quota (النواة تقيس وتطبّق الحدود)
 runtime/
   scheduler/    @aok/scheduler     جدولة داخل العملية
   sandbox/      @aok/sandbox       Sandbox Manager
 plugins/
   agents/       @aok/agents        Agent Registry (Plugin)
   tools/        @aok/tools         Tool Registry + Shell مقيّد
-  models/       @aok/models        Model Router
+  models/       @aok/models        Model Router + BYOK + MockProvider
   memory/       @aok/memory        Memory + Knowledge (منفصلان)
   verification/ @aok/verification  Verification Engine
 adapters/
   vault/        @aok/vault         Vault (SecretRef → credential)
+  billing/      @aok/billing       BillingAdapter (خارج النواة — Noop افتراضيًا)
+apps/
+  cli/          @aok/cli           celia CLI + LocalRunner (Vertical Slice محلي $0)
 tests/
   architecture/ @aok/architecture-tests   فرض قوانين الدستور بالكود
-apps/  storage/  (قادم: api / cli / console · postgres / event-store / object-store)
+storage/  (قادم: postgres / event-store / object-store)
 ```
 
 ---
@@ -183,10 +191,14 @@ apps/  storage/  (قادم: api / cli / console · postgres / event-store / obje
 | `execute(action, context)` + CapabilityExecutor | ✅ منفّذ + اختبارات |
 | Capability Composition | ✅ منفّذ + اختبارات |
 | Projections (state=replay) + EventStore | ✅ منفّذ + اختبارات |
-| Architecture Tests (قوانين الدستور) | ✅ منفّذ |
+| Architecture Tests (قوانين الدستور + الاقتصاد) | ✅ منفّذ |
+| Economic Kernel (Metering + Quota في النواة) | ✅ منفّذ + اختبارات |
+| Billing خارج النواة (Noop/InMemory) | ✅ منفّذ + اختبارات |
+| BYOK (SecretRef) + MockProvider ($0) | ✅ منفّذ + اختبارات |
+| LocalRunner + `celia` CLI (Vertical Slice محلي $0) | ✅ منفّذ + اختبارات |
 | Adapters (github / mcp / databases / cloud) | ⏳ قادم |
 | Storage (postgres / event-store / object-store) | ⏳ قادم |
-| Apps (api / cli `celia` / console) | ⏳ قادم |
-| الـVertical Slice end-to-end | ⏳ قادم |
+| Deploy على الطبقة المجانية (Workers/Pages) | ⏳ قادم |
+| الـVertical Slice الكامل (GitHub حقيقي) | ⏳ قادم |
 
 *معيار القبول النهائي: قائمة الأسئلة السبعة في الدستور كلها = "نعم".*

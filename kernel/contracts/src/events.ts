@@ -34,7 +34,7 @@ export interface LedgerEvent<T = unknown> {
   seq: number; // رقم تسلسلي رتيب داخل الـLedger
   timestamp: string; // ISO-8601
   actor: Actor;
-  type: EventType;
+  type: string; // مفتوح (ontology-neutral): EVENT_TYPES كتالوج مرجعي وليس قيدًا
   taskId: string;
   runId: string;
   payload: T;
@@ -46,7 +46,7 @@ export interface LedgerEvent<T = unknown> {
 /** ما يُقدَّم للـLedger؛ seq/timestamp/hash تُحسب تلقائيًا. */
 export interface LedgerEventDraft<T = unknown> {
   actor: Actor;
-  type: EventType;
+  type: string;
   taskId: string;
   runId: string;
   payload: T;

@@ -4,7 +4,7 @@
 > أي كود يُكتب يجب أن يلتزم بالعقود المعرّفة هنا، وأي انحراف يتطلب تحديث هذا المستند أولًا.
 
 > **التسلسل الهرمي الحالي:** [`KERNEL_CONSTITUTION.md`](KERNEL_CONSTITUTION.md) (الدستور الأعلى)
-> ← [`ARCHITECTURE_CONTRACT_V2.md`](ARCHITECTURE_CONTRACT_V2.md) (عقد النواة الذرية)
+> ← [`ATOMIC_KERNEL_CONTRACT.md`](ATOMIC_KERNEL_CONTRACT.md) (عقد النواة الذرية)
 > ← **هذا المستند** (القانون التنفيذي لعقد النظام الشامل: العقود/APIs/آلات الحالة).
 > القرارات الهندسية في [الدستور الهندسي](architecture/CONSTITUTION.md) و[سجل الـADRs](architecture/ADRs/).
 

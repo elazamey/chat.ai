@@ -23,3 +23,6 @@
 | 0019 | [Capability Composition](./ADR-0019-capability-composition.md) | الانشطارية الرسمية: compose() |
 | 0020 | [اتجاه التبعية + Architecture Tests](./ADR-0020-dependency-direction-tests.md) | القانون مفروض بالكود |
 | 0021 | [شكل المستودع](./ADR-0021-repo-layout.md) | kernel/runtime/plugins/adapters/storage |
+| 0022 | [Zero-Cost Economic Contract](./ADR-0022-zero-cost-economic-contract.md) | Open Core + Profit Boundary + مسار $0 → $$$ |
+| 0023 | [Control/Execution Plane + Local Runner](./ADR-0023-control-execution-plane.md) | Cloud Control + Local Execution |
+| 0024 | [Economic Kernel + BYOK + Mock](./ADR-0024-economic-kernel-byok.md) | Metering/Quota في النواة، Billing خارجها |

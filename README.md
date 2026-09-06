@@ -9,8 +9,9 @@ Intent → Task → Plan → Policy → Execution → Evidence → Verification 
 
 ## الوثائق المرجعية (التسلسل الهرمي)
 
-- 📜 **[KERNEL_CONSTITUTION.md](docs/KERNEL_CONSTITUTION.md)** — دستور النواة (القواعد العشر + البدائيات + معيار النجاح).
-- 📄 **[ARCHITECTURE_CONTRACT_V2.md](docs/ARCHITECTURE_CONTRACT_V2.md)** — عقد النواة الذرية (interfaces + قواعد التبعية).
+- 📜 **[KERNEL_CONSTITUTION.md](docs/KERNEL_CONSTITUTION.md)** — دستور النواة (القواعد العشر + المبادئ الاقتصادية العشرة + معيار النجاح).
+- 📄 **[ATOMIC_KERNEL_CONTRACT.md](docs/ATOMIC_KERNEL_CONTRACT.md)** — عقد النواة الذرية (interfaces + قواعد التبعية).
+- 💰 **[ZERO_COST_ECONOMIC_CONTRACT.md](docs/ZERO_COST_ECONOMIC_CONTRACT.md)** — العقد الاقتصادي (Free Core + BYOK + Runner + Metering/Quota).
 - 📄 **[ARCHITECTURE_CONTRACT_V1.md](docs/ARCHITECTURE_CONTRACT_V1.md)** — عقد النظام الشامل (العقود/APIs/آلات الحالة).
 - 🗂️ **[سجل القرارات المعمارية (ADRs)](docs/architecture/ADRs/)** — كل قرار بسياقه ونتائجه.
 
@@ -35,12 +36,13 @@ Entity · Event · Capability · Result
 ## البنية (Monorepo)
 
 ```text
-kernel/     contracts · execution · capability · policy · transition · events
+kernel/     contracts · execution · capability · policy · transition · events · economics
 runtime/    scheduler · sandbox
 plugins/    agents · tools · models · memory · verification
-adapters/   vault
+adapters/   vault · billing
+apps/       cli (celia + LocalRunner)
 tests/      architecture      (فرض قوانين الدستور بالكود)
-apps/ storage/                (قادم: api · cli · console · postgres · event-store)
+storage/    (قادم: postgres · event-store · object-store)
 ```
 
 | المكوّن | الحزمة |
@@ -55,6 +57,9 @@ apps/ storage/                (قادم: api · cli · console · postgres · ev
 | الأدوات / الوكلاء | `@aok/tools` · `@aok/agents` |
 | النماذج / الذاكرة / التحقق | `@aok/models` · `@aok/memory` · `@aok/verification` |
 | الأسرار | `@aok/vault` |
+| الاقتصاد (قياس + حدود) | `@aok/economics` |
+| الفوترة (خارج النواة) | `@aok/billing` |
+| الـRunner المحلي + CLI | `@aok/cli` |
 
 ## التشغيل
 
@@ -76,4 +81,5 @@ bash scripts/setup-hooks.sh   # التفعيل لأي نسخة جديدة
 ## الحالة
 
 `IMPLEMENTING` — النواة الذرية منفّذة (primitives + execute() + projections + composition +
-architecture tests) مع اختبارات خضراء. التالي وفقًا للدستور: **Adapters → Storage → Apps (api/cli) → الـVertical Slice end-to-end**.
+architecture tests) + **الطبقة الاقتصادية** (Quota + Metering + BYOK + MockProvider + LocalRunner
+يعمل محليًا بـ$0). التالي وفقًا للدستور: **Adapters (github) → Storage → Deploy على الطبقة المجانية → الـVertical Slice الكامل**.

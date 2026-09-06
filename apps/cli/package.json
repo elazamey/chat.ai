@@ -1,0 +1,28 @@
+{
+  "name": "@aok/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/local-runner.ts",
+  "types": "./src/local-runner.ts",
+  "bin": {
+    "celia": "./src/cli.ts"
+  },
+  "exports": {
+    ".": "./src/local-runner.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@aok/contracts": "workspace:*",
+    "@aok/policy": "workspace:*",
+    "@aok/execution": "workspace:*",
+    "@aok/events": "workspace:*",
+    "@aok/economics": "workspace:*",
+    "@aok/verification": "workspace:*",
+    "@aok/models": "workspace:*",
+    "@aok/vault": "workspace:*",
+    "@aok/billing": "workspace:*"
+  }
+}

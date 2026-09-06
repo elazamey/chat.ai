@@ -204,14 +204,60 @@ Contracts ← Kernel ← Runtime ← Plugins ← Integrations
 
 ---
 
+## المبادئ الاقتصادية العشرة (Zero-Cost + Monetizable-by-Design)
+
+> التفصيل الكامل: [`ZERO_COST_ECONOMIC_CONTRACT.md`](ZERO_COST_ECONOMIC_CONTRACT.md)
+
+```text
+ECONOMIC PRINCIPLE 001
+The Kernel MUST operate without a paid external dependency.
+
+ECONOMIC PRINCIPLE 002
+Local execution MUST remain a first-class supported mode.
+
+ECONOMIC PRINCIPLE 003
+External model providers MUST be replaceable.
+
+ECONOMIC PRINCIPLE 004
+Cloud execution MUST NOT be required for core functionality.
+
+ECONOMIC PRINCIPLE 005
+Every metered resource MUST have an explicit budget policy.
+
+ECONOMIC PRINCIPLE 006
+The free core MUST remain useful, not crippled.
+
+ECONOMIC PRINCIPLE 007
+Paid features MUST primarily monetize convenience, scale,
+governance, managed infrastructure, and ecosystem value.
+
+ECONOMIC PRINCIPLE 008
+No infrastructure component may create unavoidable
+vendor lock-in for the Kernel.
+
+ECONOMIC PRINCIPLE 009
+The architecture MUST support BYOK and local models.
+
+ECONOMIC PRINCIPLE 010
+The product MUST be capable of reaching first revenue
+before requiring material infrastructure spend.
+```
+
+**حكم الـBilling:** النواة **تقيس وتطبّق الحدود** (`UsageMeter` + `QuotaPolicy` في `kernel/economics`)؛
+بينما `BillingAdapter` (Stripe/PayPal/…) **خارج النواة** (`adapters/billing`) وتُضاف عند وجود إيراد.
+
+---
+
 ## التسلسل الهرمي للوثائق
 
 ```text
-KERNEL_CONSTITUTION.md        (هذا — القانون الأعلى)
+KERNEL_CONSTITUTION.md          (هذا — القانون الأعلى: القواعد العشر + المبادئ الاقتصادية العشرة)
         ↓
-ARCHITECTURE_CONTRACT_V2.md   (عقد النواة الذرية — القانون التنفيذي)
+ATOMIC_KERNEL_CONTRACT.md       (عقد النواة الذرية — القانون التنفيذي)
         ↓
-ARCHITECTURE_CONTRACT_V1.md   (عقد النظام الشامل — مرجع العقود/APIs)
+ZERO_COST_ECONOMIC_CONTRACT.md  (العقد الاقتصادي الصفري)
+        ↓
+ARCHITECTURE_CONTRACT_V1.md     (عقد النظام الشامل — مرجع العقود/APIs)
         ↓
 ADRs + architecture/CONSTITUTION.md (سجل القرارات)
 ```
