@@ -85,6 +85,29 @@ interface Result {
 | **RULE 009** | No component may **grant itself authority**. |
 | **RULE 010** | Every capability boundary **MUST** be explicit. |
 
+### مبادئ الذرية الإضافية (M2 — الحدود الخارجية)
+
+```text
+ATOMICITY PRINCIPLE 011
+An external integration MUST be replaceable
+without modifying Kernel semantics.
+
+ATOMICITY PRINCIPLE 012
+No plugin may acquire authority by merely being installed.
+
+ATOMICITY PRINCIPLE 013
+Every side effect crossing the Kernel boundary
+MUST produce an auditable Event.
+
+ATOMICITY PRINCIPLE 014
+Every external completion claim MUST reference
+verifiable Evidence.
+
+ATOMICITY PRINCIPLE 015
+A production integration MUST NOT introduce
+a mandatory paid dependency into the Kernel.
+```
+
 ---
 
 ## قوانين النواة

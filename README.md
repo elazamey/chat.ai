@@ -36,11 +36,11 @@ Entity · Event · Capability · Result
 ## البنية (Monorepo)
 
 ```text
-kernel/     contracts · execution · capability · policy · transition · events · economics
+kernel/     contracts · execution · capability · policy · transition · events · economics · registry
 runtime/    scheduler · sandbox
-plugins/    agents · tools · models · memory · verification
+plugins/    agents · tools · tools/github · models · memory · verification
 adapters/   vault · billing
-apps/       cli (celia + LocalRunner)
+apps/       cli (celia + LocalRunner + GitHub E2E)
 tests/      architecture      (فرض قوانين الدستور بالكود)
 storage/    (قادم: postgres · event-store · object-store)
 ```
@@ -59,6 +59,8 @@ storage/    (قادم: postgres · event-store · object-store)
 | الأسرار | `@aok/vault` |
 | الاقتصاد (قياس + حدود) | `@aok/economics` |
 | الفوترة (خارج النواة) | `@aok/billing` |
+| الأسماء + المخططات | `@aok/registry` |
+| GitHub (plugin خارجي) | `@aok/github` |
 | الـRunner المحلي + CLI | `@aok/cli` |
 
 ## التشغيل
@@ -80,6 +82,6 @@ bash scripts/setup-hooks.sh   # التفعيل لأي نسخة جديدة
 
 ## الحالة
 
-`IMPLEMENTING` — النواة الذرية منفّذة (primitives + execute() + projections + composition +
-architecture tests) + **الطبقة الاقتصادية** (Quota + Metering + BYOK + MockProvider + LocalRunner
-يعمل محليًا بـ$0). التالي وفقًا للدستور: **Adapters (github) → Storage → Deploy على الطبقة المجانية → الـVertical Slice الكامل**.
+`M2 IN_PROGRESS` — النواة الذرية + الطبقة الاقتصادية + **GitHub Adapter (plugin خارجي) +
+Namespace/Schema Registry + أول E2E حقيقي ضد المستودع** (PR فعلي + تحقق متعدد الطبقات + تصدير أدلة + Replay).
+التسلسل الملزم: **M3 Persistent Event Store → M4 Free Deployment → M5 Real E2E + CI → M6 Monetization**.

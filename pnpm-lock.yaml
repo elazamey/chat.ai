@@ -47,12 +47,18 @@ importers:
       '@aok/execution':
         specifier: workspace:*
         version: link:../../kernel/execution
+      '@aok/github':
+        specifier: workspace:*
+        version: link:../../plugins/tools/github
       '@aok/models':
         specifier: workspace:*
         version: link:../../plugins/models
       '@aok/policy':
         specifier: workspace:*
         version: link:../../kernel/policy
+      '@aok/registry':
+        specifier: workspace:*
+        version: link:../../kernel/registry
       '@aok/vault':
         specifier: workspace:*
         version: link:../../adapters/vault
@@ -96,6 +102,15 @@ importers:
         specifier: workspace:*
         version: link:../contracts
 
+  kernel/registry:
+    dependencies:
+      '@aok/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      zod:
+        specifier: ^3.23.8
+        version: 3.25.76
+
   kernel/transition:
     dependencies:
       '@aok/contracts':
@@ -128,6 +143,21 @@ importers:
       '@aok/contracts':
         specifier: workspace:*
         version: link:../../kernel/contracts
+      zod:
+        specifier: ^3.23.8
+        version: 3.25.76
+
+  plugins/tools/github:
+    dependencies:
+      '@aok/contracts':
+        specifier: workspace:*
+        version: link:../../../kernel/contracts
+      '@aok/execution':
+        specifier: workspace:*
+        version: link:../../../kernel/execution
+      '@aok/registry':
+        specifier: workspace:*
+        version: link:../../../kernel/registry
       zod:
         specifier: ^3.23.8
         version: 3.25.76

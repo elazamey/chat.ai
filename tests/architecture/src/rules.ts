@@ -14,9 +14,9 @@ export const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..
  */
 export const LAYERS = {
   contracts: ['kernel/contracts'],
-  kernel: ['kernel/execution', 'kernel/capability', 'kernel/policy', 'kernel/transition', 'kernel/events', 'kernel/economics'],
+  kernel: ['kernel/execution', 'kernel/capability', 'kernel/policy', 'kernel/transition', 'kernel/events', 'kernel/economics', 'kernel/registry'],
   runtime: ['runtime/scheduler', 'runtime/sandbox'],
-  plugins: ['plugins/agents', 'plugins/tools', 'plugins/models', 'plugins/memory', 'plugins/verification'],
+  plugins: ['plugins/agents', 'plugins/tools', 'plugins/tools/github', 'plugins/models', 'plugins/memory', 'plugins/verification'],
   adapters: ['adapters/vault', 'adapters/billing'],
   apps: ['apps/cli'],
 } as const;

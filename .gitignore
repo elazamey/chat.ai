@@ -17,6 +17,9 @@ pnpm-debug.log*
 .env.*
 !.env.example
 
+# e2e evidence (generated, not committed)
+.e2e-artifacts/
+
 # editor / os
 .DS_Store
 .idea/

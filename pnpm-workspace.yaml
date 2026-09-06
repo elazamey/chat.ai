@@ -3,6 +3,7 @@ packages:
   - 'kernel/*'
   - 'runtime/*'
   - 'plugins/*'
+  - 'plugins/*/*'
   - 'adapters/*'
   - 'storage/*'
   - 'tests/*'

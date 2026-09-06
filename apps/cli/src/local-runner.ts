@@ -13,6 +13,7 @@ import {
   type Result,
   type Usage,
   type Verification,
+  type VerificationCheck,
 } from '@aok/contracts';
 import { Ledger } from '@aok/events';
 import { PolicyEngine } from '@aok/policy';
@@ -57,6 +58,12 @@ export interface RunnerOptions {
   approvalPolicy?: ApprovalPolicy;
   onApprovalRequired?: (req: ApprovalRequest) => Promise<boolean> | boolean;
   billing?: BillingAdapter;
+  /** حارس الأسماء (Namespace + Schema Registry) — يرفض قدرات غير مسجّلة/محجوزة. */
+  capabilityGuard?: CapabilityGuard;
+}
+
+export interface CapabilityGuard {
+  assertCapabilityRegistered(name: string): void;
 }
 
 export interface ProofCarryingOutcome {
@@ -72,9 +79,18 @@ export interface ProofCarryingOutcome {
   ledger: LedgerEvent[];
 }
 
+export interface RunStep {
+  action: string;
+  input?: unknown | ((results: Result[]) => unknown);
+}
+
 export interface RunTaskOptions {
   actorId?: string;
   plan?: string[]; // إن لم يُقدَّم، يُستمد من الـMockProvider ($0)
+  steps?: RunStep[]; // خطوات بإدخالات صريحة (للاستخدام الخارجي مثل GitHub E2E)
+  onVerify?: (
+    ctx: { results: Result[]; runner: LocalRunner },
+  ) => VerificationCheck[] | Promise<VerificationCheck[]>;
 }
 
 /**
@@ -100,6 +116,7 @@ export class LocalRunner {
   private mode: RunMode;
   private onApprovalRequired?: (req: ApprovalRequest) => Promise<boolean> | boolean;
   private billing: BillingAdapter;
+  private capabilityGuard?: CapabilityGuard;
 
   constructor(opts: RunnerOptions = {}) {
     this.mode = opts.mode ?? modeFromEnv();
@@ -107,6 +124,7 @@ export class LocalRunner {
     this.policy = new PolicyEngine(opts.grants ?? [], opts.approvalPolicy ?? DEFAULT_APPROVAL_POLICY);
     this.onApprovalRequired = opts.onApprovalRequired;
     this.billing = opts.billing ?? new NoopBillingAdapter();
+    this.capabilityGuard = opts.capabilityGuard;
   }
 
   registerExecutor(action: string, executor: CapabilityExecutor): void {
@@ -129,15 +147,29 @@ export class LocalRunner {
 
     // 2) Plan (0$ — MockProvider حتمي)
     const plan = opts.plan ?? (await this.planWithMock(intent));
+    const steps: RunStep[] =
+      opts.steps ?? plan.map((action) => ({ action, input: {} }));
     this.meter.record({ resource: 'model_calls', amount: 1, at: Date.now(), actorId, runId });
-    this.ledger.append({ actor: systemActor, type: 'PlanGenerated', taskId, runId, payload: { plan } });
+    this.ledger.append({ actor: systemActor, type: 'PlanGenerated', taskId, runId, payload: { plan: steps.map((s) => s.action) } });
 
     const results: Result[] = [];
     const emit = this.makeEmitter(taskId, runId, actorId);
     const policyCtx: PolicyContext = { evaluate: (action) => this.policy.evaluate(actorId, action) };
 
-    // 3) تنفيذ كل خطوة عبر execute() مع سياج السياسة + الموافقة + الـquota
-    for (const action of plan) {
+    // 3) تنفيذ كل خطوة عبر execute() مع سياج السياسة + الموافقة + الـquota + حارس الأسماء
+    for (const step of steps) {
+      const action = step.action;
+
+      // حارس الأسماء (Namespace + Schema Registry): لا قدرات محجوزة/غير مسجّلة
+      try {
+        this.capabilityGuard?.assertCapabilityRegistered(action);
+      } catch (err) {
+        const reason = err instanceof Error ? err.message : String(err);
+        this.ledger.append({ actor: systemActor, type: 'CapabilityRejected', taskId, runId, payload: { action, reason } });
+        results.push({ status: 'failure', output: { error: reason }, evidence: [] });
+        continue;
+      }
+
       const decision = this.policy.evaluate(actorId, action as Capability);
 
       if (!decision.allowed) {
@@ -173,18 +205,20 @@ export class LocalRunner {
         emit,
       });
 
-      const result = await execute(action, {}, ctx, this.executors);
+      const result = await execute(action, this.resolveInput(step, results), ctx, this.executors);
       this.meter.record({ resource: 'tool_calls', amount: 1, at: Date.now(), actorId, runId });
       results.push(result);
     }
 
     // 4) Verification (RULE 005): لا نجاح بدون دليل
-    const checks = results.map((r, i) => ({
-      id: `check-${i}`,
-      name: `action[${i}]`,
-      verdict: r.status === 'success' ? ('PASSED' as const) : ('FAILED' as const),
-      evidence: r.evidence,
-    }));
+    const checks: VerificationCheck[] = opts.onVerify
+      ? await opts.onVerify({ results, runner: this })
+      : results.map((r, i) => ({
+          id: `check-${i}`,
+          name: `action[${i}]`,
+          verdict: r.status === 'success' ? ('PASSED' as const) : ('FAILED' as const),
+          evidence: r.evidence,
+        }));
     const verification = this.verifier.verify(intent, checks);
     this.ledger.append({
       actor: systemActor,
@@ -231,6 +265,11 @@ export class LocalRunner {
 
   private capabilitiesFor(action: Capability): CapabilitySpec[] {
     return [{ id: `${action}@*`, action, scope: '*', constraints: [] }];
+  }
+
+  private resolveInput(step: RunStep, results: Result[]): unknown {
+    if (typeof step.input === 'function') return step.input(results);
+    return step.input ?? {};
   }
 
   private makeEmitter(taskId: string, runId: string, actorId: string) {

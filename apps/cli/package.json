@@ -16,6 +16,8 @@
   },
   "dependencies": {
     "@aok/contracts": "workspace:*",
+    "@aok/github": "workspace:*",
+    "@aok/registry": "workspace:*",
     "@aok/policy": "workspace:*",
     "@aok/execution": "workspace:*",
     "@aok/events": "workspace:*",

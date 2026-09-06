@@ -47,8 +47,8 @@ describe('RULE: dependency direction (contracts ← kernel ← runtime ← plugi
   }
 });
 
-describe('RULE 001/002: kernel must not know agents, tools, models, memory, verification, vault', () => {
-  const forbidden = ['@aok/agents', '@aok/tools', '@aok/models', '@aok/memory', '@aok/verification', '@aok/vault'];
+describe('RULE 001/002: kernel must not know agents, tools, models, memory, verification, vault, github', () => {
+  const forbidden = ['@aok/agents', '@aok/tools', '@aok/models', '@aok/memory', '@aok/verification', '@aok/vault', '@aok/github'];
 
   it('kernel + runtime source never imports plugins/adapters', () => {
     const scoped = [...LAYERS.kernel, ...LAYERS.runtime];
@@ -135,6 +135,39 @@ describe('ECONOMIC PRINCIPLE 005/007: metering+quota in kernel, billing outside'
   it('billing adapter depends only on contracts (external to the kernel)', () => {
     for (const dep of workspaceDepsOf(join(REPO_ROOT, 'adapters/billing'))) {
       expect(dep).toBe('@aok/contracts');
+    }
+  });
+});
+
+describe('ATOMICITY PRINCIPLE 011: GitHub is an external plugin — ZERO kernel knowledge', () => {
+  it('kernel/runtime never import @aok/github or any github SDK', () => {
+    for (const dir of [...LAYERS.kernel, ...LAYERS.runtime]) {
+      for (const file of walk(join(REPO_ROOT, dir))) {
+        const src = readFileSync(file, 'utf8');
+        expect(src, `${relative(REPO_ROOT, file)} imports @aok/github`).not.toMatch(
+          /from\s+['"]@aok\/github['"]/,
+        );
+        expect(src, `${relative(REPO_ROOT, file)} imports a github SDK`).not.toMatch(
+          /from\s+['"](?:@?octokit[a-z0-9/@-]*|github)['"]/,
+        );
+      }
+    }
+  });
+
+  it('kernel/runtime package.json declare no @aok/github dependency', () => {
+    for (const dir of [...LAYERS.kernel, ...LAYERS.runtime]) {
+      for (const dep of workspaceDepsOf(join(REPO_ROOT, dir))) {
+        expect(dep, `${dir} must not depend on @aok/github`).not.toBe('@aok/github');
+      }
+    }
+  });
+
+  it('the github plugin lives in plugins/ and depends only on allowed layers', () => {
+    const pkgDir = join(REPO_ROOT, 'plugins/tools/github');
+    expect(layerOfPackage(pkgDir)).toBe('plugins');
+    for (const dep of workspaceDepsOf(pkgDir)) {
+      const depLayer = packageNameToLayer(dep);
+      expect(ALLOWED_DEPS.plugins, `plugins/tools/github → ${dep}`).toContain(depLayer);
     }
   });
 });

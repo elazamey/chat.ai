@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { LocalRunner, FREE_BUDGET } from './local-runner';
 import type { CapabilityExecutor } from '@aok/execution';
+import { validateCapabilityName } from '@aok/contracts';
 import type { ApprovalPolicy } from '@aok/contracts';
 
 /** منفّذ وهمي يعيد دليلًا — بلا خدمات خارجية ($0). */
@@ -97,5 +98,24 @@ describe('LocalRunner — vertical slice, local at $0', () => {
       if (prev === undefined) delete process.env.CELIA_MODE;
       else process.env.CELIA_MODE = prev;
     }
+  });
+});
+
+describe('LocalRunner — Namespace + Schema Registry guard (no admin.superpower)', () => {
+  it('rejects reserved/unregistered capability names even if granted', async () => {
+    const runner = new LocalRunner({
+      approvalPolicy,
+      onApprovalRequired: async () => true,
+      capabilityGuard: { assertCapabilityRegistered: (name) => {
+        const r = validateCapabilityName(name);
+        if (!r.valid) throw new Error(r.reason);
+      } },
+    });
+    runner.grant({ id: 'g', principal: 'coder', capability: 'admin.superpower', scope: '*', effect: 'allow' });
+    runner.registerExecutor('admin.superpower', mockExecutor('x'));
+
+    const outcome = await runner.run('attempt admin', { plan: ['admin.superpower'] });
+    expect(outcome.verdict).toBe('FAILED');
+    expect(outcome.ledger.map((e) => e.type)).toContain('CapabilityRejected');
   });
 });

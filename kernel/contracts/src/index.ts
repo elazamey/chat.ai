@@ -13,3 +13,4 @@ export * from './secret';
 export * from './model';
 export * from './memory';
 export * from './economics';
+export * from './naming';

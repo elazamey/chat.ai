@@ -1,13 +1,6 @@
-import type { SecretRef, ShortLivedCredential } from '@aok/contracts';
+import type { SecretRef, ShortLivedCredential, VaultAdapter } from '@aok/contracts';
 
-/**
- * واجهة الـVault (C10): النواة تحمل SecretRef فقط،
- * والقيمة تصل كـcredential قصير العمر وقت التنفيذ.
- * المحولات: in-memory (dev) / 1Password / AWS KMS / HashiCorp Vault (لاحقًا).
- */
-export interface VaultAdapter {
-  resolve(ref: SecretRef, principal: string): Promise<ShortLivedCredential>;
-}
+export type { VaultAdapter };
 
 export class SecretNotFoundError extends Error {
   constructor(readonly ref: SecretRef) {
