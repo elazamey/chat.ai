@@ -21,6 +21,19 @@
 - قابل للاستئناف بعد الفشل (Checkpoint/Resume + Idempotency).
 - نموذج-محايد عبر Model Router، وعزل صارم عبر Security Kernel.
 
+## الدفع التلقائي إلى المستودع
+
+المستودع مفعّل للدفع التلقائي: كل `commit` يدفع الفرع الحالي إلى `origin` فورًا.
+
+- الـhook: [`.githooks/post-commit`](.githooks/post-commit)
+- التفعيل لأي نسخة جديدة من المستودع:
+
+  ```bash
+  bash scripts/setup-hooks.sh
+  ```
+
+  (يضبط `core.hooksPath = .githooks` ويمنح الـhook صلاحية التنفيذ)
+
 ## الحالة
 
 `FOR_REVIEW` — العقد v1 جاهز للمراجعة قبل بدء المرحلة M0.
