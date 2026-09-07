@@ -34,6 +34,13 @@ Intent → Task → Plan → Policy → Execution → Evidence → Verification 
 - `celia health` · `celia safe-mode` · `celia emergency-lock` — مراقبة + Safe Mode + Disaster Mode.
 - Immune Tests في `tests/architecture/` + سيناريوهات حقيقية في `kernel/immune/src/index.test.ts`.
 
+### الـTest Harness + System Resurrection Test (العضو #30)
+
+- `tests/harness/` (`@aok/harness`) — Mock World · Failure Injection · Chaos · Replay · Deterministic Clock/IDs · Fake GitHub/Model/Vault.
+- **System Resurrection Test**: سيناريو القبول الكامل (26 خطوة) محليًا بـ$0 مع حقن الهجمات/الفشل:
+  `ATTACK/FAILURE → DETECT → CONTAIN → RECORD → RECOVER → VERIFY → RESUME`.
+- خريطة الإغلاق الكاملة (TIER 0/1/2 + ترتيب البناء) في `docs/milestones/SYSTEM_OF_SYSTEMS.md`.
+
 ## البدائيات الأربعة
 
 ```ts
@@ -60,7 +67,7 @@ runtime/    scheduler · sandbox
 plugins/    agents · tools · tools/github · models · memory · verification
 adapters/   vault · billing
 apps/       cli (celia + LocalRunner + GitHub E2E + ownership prove)
-tests/      architecture      (فرض قوانين الدستور + Ownership/Immune Tests بالكود)
+tests/      architecture · harness      (فرض القوانين + System Resurrection Test بالكود)
 storage/    (قادم: postgres · event-store · object-store)
 ```
 

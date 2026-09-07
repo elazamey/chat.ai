@@ -229,6 +229,30 @@ importers:
         specifier: ^5.5.4
         version: 5.9.3
 
+  tests/harness:
+    dependencies:
+      '@aok/cli':
+        specifier: workspace:*
+        version: link:../../apps/cli
+      '@aok/contracts':
+        specifier: workspace:*
+        version: link:../../kernel/contracts
+      '@aok/events':
+        specifier: workspace:*
+        version: link:../../kernel/events
+      '@aok/execution':
+        specifier: workspace:*
+        version: link:../../kernel/execution
+      '@aok/immune':
+        specifier: workspace:*
+        version: link:../../kernel/immune
+      '@aok/provenance':
+        specifier: workspace:*
+        version: link:../../kernel/provenance
+      yaml:
+        specifier: ^2.5.0
+        version: 2.9.0
+
 packages:
 
   '@esbuild/aix-ppc64@0.21.5':

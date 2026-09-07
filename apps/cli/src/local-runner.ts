@@ -87,6 +87,8 @@ export interface RunStep {
 
 export interface RunTaskOptions {
   actorId?: string;
+  /** ثقة الفاعل في هذه الـrun (لتشغيل سيناريو "مكوّن خبيث" عبر الـImmune Gate). */
+  actorTrust?: 'UNKNOWN' | 'SUSPICIOUS' | 'VERIFIED' | 'TRUSTED';
   plan?: string[]; // إن لم يُقدَّم، يُستمد من الـMockProvider ($0)
   steps?: RunStep[]; // خطوات بإدخالات صريحة (للاستخدام الخارجي مثل GitHub E2E)
   onVerify?: (
@@ -202,8 +204,8 @@ export class LocalRunner {
       }
 
       // Immune Gate — القاعدة الذهبية: Agent → Immune → Policy → Execution
-      const immuneDecision = this.immune.evaluate({
-        principal: this.principalFor(actorId),
+      const immuneDecision = this.immune.evaluateAndApply({
+        principal: this.principalFor(actorId, opts.actorTrust),
         capability: action as Capability,
         scope: '*',
       });
@@ -298,9 +300,9 @@ export class LocalRunner {
     return [{ id: `${action}@*`, action, scope: '*', constraints: [] }];
   }
 
-  private principalFor(actorId: string): Principal {
+  private principalFor(actorId: string, trust: 'UNKNOWN' | 'SUSPICIOUS' | 'VERIFIED' | 'TRUSTED' = 'VERIFIED'): Principal {
     // الوكيل المهيأ بواسطة الـrunner: هوية معلنة، ثقة VERIFIED (ليست UNKNOWN→privileged).
-    return { id: actorId, type: 'agent', trust: 'VERIFIED', credentials: [] };
+    return { id: actorId, type: 'agent', trust, credentials: [] };
   }
 
   private resolveInput(step: RunStep, results: Result[]): unknown {
