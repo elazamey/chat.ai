@@ -45,10 +45,10 @@ INTELLIGENCE            EXECUTION                TRUST
 
 | النظام | الحالة | الفجوة |
 |---|---|---|
-| Scheduler | جزئي — `InProcessScheduler` (FIFO) | retry/timeout/priority/concurrency/cancel |
-| Orchestrator | ❌ | تنفيذ Task→Run→Node→Job فعلي |
-| Workflow Graph | جزئي — `dag.ts` (validate + topologicalLayers) + state machines | محرك تنفيذ (parallel/conditional/compensation/rollback) |
-| Queue | ❌ | `enqueue/dequeue/ack/retry/deadLetter/cancel` + adapters |
+| Scheduler | ✅ `@aok/orchestrator` — `Scheduler`/`JobQueue` (enqueue/cancel/retry/dequeue) + InProcess (نقل مجهول) | Postgres/Redis/cloud adapters لاحقًا |
+| Orchestrator | ✅ `DagExecutor` — Task→Run→PlanGraph→Node→Job فوق النواة (لا يملك Policy/Ledger/Secrets/…) | — |
+| Workflow Graph | ✅ DAG Executor (sequential/parallel/conditional/dependency/retry/timeout/approval/compensation/rollback/cancellation) | — |
+| Queue | ✅ `JobQueue` (pull) + Idempotency (operationId/attempt/idempotencyKey) + Bulkhead | dead-letter + adapters |
 | GitHub Adapter | ✅ M2 | — |
 | Model Gateway | جزئي — `ModelRouter` + `MockProvider` | retry/fallback/rate-limit/circuit-breaker على الـoutage |
 | Memory | جزئي — `InMemoryStore` + `InMemoryKnowledgeStore` (provenance) | write policy/retention/expiration/confidence/verification/deletion |
@@ -118,5 +118,11 @@ ATTACK/FAILURE → DETECT → CONTAIN → RECORD → RECOVER → VERIFY → RESU
 - ✅ **Test Harness** — `tests/harness/` (`@aok/harness`): Mock World · Failure Injection · Chaos · Replay · Deterministic Clock/IDs · Fake GitHub/Model/Vault.
 - ✅ **M3 Persistent Event Store + Storage** — `storage/store/` (`@aok/store`): `EventStore` + `ProjectionStore` + `CheckpointStore` + `EvidenceStore`
   (SQLite dev/test عبر `node:sqlite`، و`PostgresEventStore` خلف `SqlDriver` للإنتاج) + `DurableLedger` (hydrate/flush/tamper-evident).
+- ✅ **M4 Orchestrator + Workflow Executor** — `runtime/orchestrator/` (`@aok/orchestrator`): آلة تنفيذ صغيرة فوق النواة
+  (لا تملك Policy/Ledger/Secrets/Model/Tool/Storage) — DAG Executor (sequential/parallel/conditional/dependency/retry/timeout/
+  approval/compensation/rollback/cancellation) + Scheduler مستقل + Idempotency (operationId/attempt/idempotencyKey) +
+  Bulkhead + آلة حالة قانونية (PLANNED→…→COMPLETED، FAILED→RETRYING/COMPENSATING/QUARANTINED) + hydrate/resume (crash recovery).
 - ✅ **System Resurrection Test** — سيناريو القبول 26 خطوة محليًا بـ$0، وخطوات kill/restart/replay أصبحت **حقيقية** (SQLite دائم) مع حقن الهجوم/الفشل والحلقة الكاملة.
-- ⏭️ التالي: **Orchestrator + Workflow Executor** (الخطوة 2)، ثم Queue، ثم Model Gateway، ثم Memory/RAG، ثم Identity.
+- ✅ **M4.12 Resurrection + Chaos E2E** — `tests/harness/src/orchestrator-resurrection.test.ts`: Parallel + Retry + Approval + Quota + crash + network + duplicate delivery،
+  مع SQLite حقيقي: NO duplicate side effect · NO unauthorized execution · NO lost state · NO corrupted ledger · NO bypass of quota/approval.
+- ⏭️ التالي: **Model Gateway (retry/fallback/rate-limit/circuit-breaker)** (الخطوة 3)، ثم Memory/RAG، ثم Identity.

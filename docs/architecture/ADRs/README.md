@@ -31,3 +31,4 @@
 | 0027 | [Digital Immune System (Immune Core)](./ADR-0027-immune-system.md) | 7 أعضاء + Immune Gate/Runtime + 12 IMMUNE PRINCIPLES |
 | 0028 | [System Resurrection Test + Harness](./ADR-0028-system-resurrection-harness.md) | Harness عضو #30 + سيناريو القبول 26 خطوة + replay |
 | 0029 | [M3: Persistent Event Store + Storage](./ADR-0029-m3-event-store.md) | Event/Projection/Checkpoint/Evidence stores + DurableLedger |
+| 0030 | [M4: Orchestrator + Workflow Executor](./ADR-0030-orchestrator-workflow.md) | DagExecutor + Scheduler + Idempotency + Compensation + Bulkhead + Crash Recovery |

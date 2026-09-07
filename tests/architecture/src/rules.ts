@@ -16,7 +16,7 @@ export const LAYERS = {
   contracts: ['kernel/contracts'],
   kernel: ['kernel/execution', 'kernel/capability', 'kernel/policy', 'kernel/transition', 'kernel/events', 'kernel/economics', 'kernel/registry', 'kernel/provenance'],
   immune: ['kernel/immune'],
-  runtime: ['runtime/scheduler', 'runtime/sandbox'],
+  runtime: ['runtime/scheduler', 'runtime/sandbox', 'runtime/orchestrator'],
   plugins: ['plugins/agents', 'plugins/tools', 'plugins/tools/github', 'plugins/models', 'plugins/memory', 'plugins/verification'],
   adapters: ['adapters/vault', 'adapters/billing'],
   storage: ['storage/store'],

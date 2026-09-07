@@ -201,6 +201,15 @@ importers:
         specifier: workspace:*
         version: link:../../kernel/contracts
 
+  runtime/orchestrator:
+    dependencies:
+      '@aok/contracts':
+        specifier: workspace:*
+        version: link:../../kernel/contracts
+      '@aok/transition':
+        specifier: workspace:*
+        version: link:../../kernel/transition
+
   runtime/sandbox:
     dependencies:
       '@aok/contracts':
@@ -246,6 +255,9 @@ importers:
       '@aok/contracts':
         specifier: workspace:*
         version: link:../../kernel/contracts
+      '@aok/economics':
+        specifier: workspace:*
+        version: link:../../kernel/economics
       '@aok/events':
         specifier: workspace:*
         version: link:../../kernel/events
@@ -255,6 +267,12 @@ importers:
       '@aok/immune':
         specifier: workspace:*
         version: link:../../kernel/immune
+      '@aok/orchestrator':
+        specifier: workspace:*
+        version: link:../../runtime/orchestrator
+      '@aok/policy':
+        specifier: workspace:*
+        version: link:../../kernel/policy
       '@aok/provenance':
         specifier: workspace:*
         version: link:../../kernel/provenance

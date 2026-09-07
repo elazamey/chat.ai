@@ -63,7 +63,7 @@ Entity · Event · Capability · Result
 
 ```text
 kernel/     contracts · execution · capability · policy · transition · events · economics · registry · provenance · immune
-runtime/    scheduler · sandbox
+runtime/    scheduler · sandbox · orchestrator (DAG Executor + Scheduler + Idempotency + Compensation + Bulkhead)
 plugins/    agents · tools · tools/github · models · memory · verification
 adapters/   vault · billing
 apps/       cli (celia + LocalRunner + GitHub E2E + ownership prove)
@@ -79,7 +79,7 @@ storage/    store (Event Store · Projections · Checkpoints · Evidence — SQL
 | السياسة (deny-precedence) | `@aok/policy` |
 | آلات الحالة + الـDAG | `@aok/transition` |
 | الـLedger + Projections | `@aok/events` |
-| الجدولة / الـSandbox | `@aok/scheduler` · `@aok/sandbox` |
+| الجدولة / الـSandbox / الـOrchestrator | `@aok/scheduler` · `@aok/sandbox` · `@aok/orchestrator` |
 | الأدوات / الوكلاء | `@aok/tools` · `@aok/agents` |
 | النماذج / الذاكرة / التحقق | `@aok/models` · `@aok/memory` · `@aok/verification` |
 | الأسرار | `@aok/vault` |
@@ -115,9 +115,10 @@ bash scripts/setup-hooks.sh   # التفعيل لأي نسخة جديدة
 
 ## الحالة
 
-`M2 COMPLETE + Ownership/Provenance + Immune System + M3 Persistent Event Store` — النواة الذرية + الطبقة الاقتصادية +
+`M4 COMPLETE (Orchestrator + Workflow Executor)` — النواة الذرية + الطبقة الاقتصادية +
 GitHub Adapter (plugin خارجي) + أول E2E حقيقي ضد المستودع (PR فعلي + تحقق متعدد الطبقات) +
 **طبقة الملكية والمصدر** (7 عقود عليا + Genesis + Ownership Ledger + `celia ownership prove`) +
 **الجهاز المناعي** (7 أعضاء + Immune Gate/Runtime + Kill Switch + Quarantine + Circuit Breakers) +
-**M3** (`@aok/store`: Event Store/Projections/Checkpoints/Evidence + DurableLedger + System Resurrection Test حقيقي).
-التسلسل الملزم: **Orchestrator + Workflow → Queue → Model Gateway → Memory/RAG → Identity → Observability → M4 Free Deployment → M5 Real E2E + CI → M6 Monetization**.
+**M3** (`@aok/store`: Event Store/Projections/Checkpoints/Evidence + DurableLedger + System Resurrection Test حقيقي) +
+**M4** (`@aok/orchestrator`: DAG Executor + Scheduler مستقل + Idempotency + Compensation + Bulkhead + hydrate/resume — Resurrection + Chaos E2E حقيقي).
+التسلسل الملزم: **Model Gateway → Memory/RAG → Identity → Observability → M5 Free Deployment → M6 Real E2E + CI → M7 Monetization**.
