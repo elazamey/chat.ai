@@ -1,0 +1,29 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# env / secrets (never commit)
+.env
+.env.*
+!.env.example
+
+# e2e evidence (generated, not committed)
+.e2e-artifacts/
+
+# ownership proof bundle (generated, not committed)
+ownership-proof/
+
+# editor / os
+.DS_Store
+.idea/
+.vscode/

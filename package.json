@@ -1,0 +1,23 @@
+{
+  "name": "chat-ai",
+  "private": true,
+  "version": "0.1.0",
+  "description": "AOK — Agent Operating Kernel (Agent Operating System competing with Manus / Claude Code)",
+  "type": "module",
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "pnpm -r run typecheck",
+    "ownership:prove": "tsx apps/cli/src/cli.ts ownership prove"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.4",
+    "vitest": "^2.1.9"
+  }
+}

@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# post-commit — auto-push the current branch to origin after each commit.
+# Enabled via: git config core.hooksPath .githooks  (see scripts/setup-hooks.sh)
+set -uo pipefail
+
+# Re-entrancy guard (defensive; pushes do not create commits, but keep it safe).
+if [ -n "${AOK_AUTOPUSH_ACTIVE:-}" ]; then
+  exit 0
+fi
+
+branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)" || exit 0
+
+# Skip detached HEAD.
+if [ -z "$branch" ] || [ "$branch" = "HEAD" ]; then
+  exit 0
+fi
+
+# Only auto-push if a remote named 'origin' exists.
+if ! git remote get-url origin >/dev/null 2>&1; then
+  echo "→ auto-push skipped: no 'origin' remote configured" >&2
+  exit 0
+fi
+
+echo "→ auto-push: pushing branch '$branch' to origin"
+
+if git rev-parse --abbrev-ref --symbolic-full-name "@{u}" >/dev/null 2>&1; then
+  # Upstream already tracked: plain push.
+  git push origin "$branch"
+else
+  # First push: also set upstream so future pulls/pushes are tracked.
+  git push -u origin "$branch"
+fi
