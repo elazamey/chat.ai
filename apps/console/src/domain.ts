@@ -1,0 +1,53 @@
+/**
+ * نماذج نطاق الواجهة (UI domain) — فصلًا عن عقد النواة (Kernel contracts).
+ * الواجهة تعرض ما ينتجه الـAgent Runtime؛ ولا تملك منطق تنفيذ.
+ */
+export type NodeStatus = 'done' | 'active' | 'pending' | 'failed' | 'blocked';
+
+export interface Activity {
+  id: string;
+  kind: 'agent' | 'tool' | 'model' | 'system' | 'user';
+  text: string;
+  detail?: string;
+  time: string;
+}
+
+export interface WorkspaceFile {
+  path: string;
+  kind: 'code' | 'test' | 'config' | 'doc' | 'other';
+  status: 'new' | 'modified' | 'unchanged';
+}
+
+export interface AgentNode {
+  id: string;
+  label: string;
+  tool?: string;
+  status: NodeStatus;
+}
+
+export interface AgentRun {
+  id: string;
+  project: string;
+  goal: string;
+  state: 'running' | 'needs_approval' | 'completed' | 'failed';
+  nodes: AgentNode[];
+  files: WorkspaceFile[];
+}
+
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  time: string;
+  meta?: string;
+}
+
+export interface ProviderStatus {
+  name: string;
+  tier: 'Free' | 'Free tier' | 'BYOK' | 'Local';
+  status: 'healthy' | 'rate_limited' | 'quota' | 'offline';
+  models: string;
+  last?: string;
+}
+
+export type TaskTypeHint = 'planning' | 'coding' | 'research' | 'summarization' | 'vision';
