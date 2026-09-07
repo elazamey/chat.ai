@@ -7,6 +7,7 @@ export default defineConfig({
       'runtime/**/src/**/*.test.ts',
       'plugins/**/src/**/*.test.ts',
       'adapters/**/src/**/*.test.ts',
+      'storage/**/src/**/*.test.ts',
       'apps/**/src/**/*.test.ts',
       'tests/**/*.test.ts',
     ],

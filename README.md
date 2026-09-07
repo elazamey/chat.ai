@@ -68,7 +68,7 @@ plugins/    agents · tools · tools/github · models · memory · verification
 adapters/   vault · billing
 apps/       cli (celia + LocalRunner + GitHub E2E + ownership prove)
 tests/      architecture · harness      (فرض القوانين + System Resurrection Test بالكود)
-storage/    (قادم: postgres · event-store · object-store)
+storage/    store (Event Store · Projections · Checkpoints · Evidence — SQLite dev/test + Postgres adapter)
 ```
 
 | المكوّن | الحزمة |
@@ -89,6 +89,7 @@ storage/    (قادم: postgres · event-store · object-store)
 | GitHub (plugin خارجي) | `@aok/github` |
 | الملكية + المصدر | `@aok/provenance` |
 | الجهاز المناعي (Immune Core) | `@aok/immune` |
+| التخزين الدائم (M3) | `@aok/store` |
 | الـRunner المحلي + CLI | `@aok/cli` |
 
 ## التشغيل
@@ -114,8 +115,9 @@ bash scripts/setup-hooks.sh   # التفعيل لأي نسخة جديدة
 
 ## الحالة
 
-`M2 COMPLETE + Ownership/Provenance Layer + Digital Immune System` — النواة الذرية + الطبقة الاقتصادية +
+`M2 COMPLETE + Ownership/Provenance + Immune System + M3 Persistent Event Store` — النواة الذرية + الطبقة الاقتصادية +
 GitHub Adapter (plugin خارجي) + أول E2E حقيقي ضد المستودع (PR فعلي + تحقق متعدد الطبقات) +
 **طبقة الملكية والمصدر** (7 عقود عليا + Genesis + Ownership Ledger + `celia ownership prove`) +
-**الجهاز المناعي** (7 أعضاء + Immune Gate فوق النواة + Immune Runtime تحتها + Kill Switch + Quarantine + Circuit Breakers).
-التسلسل الملزم: **M3 Persistent Event Store → M4 Free Deployment → M5 Real E2E + CI → M6 Monetization**.
+**الجهاز المناعي** (7 أعضاء + Immune Gate/Runtime + Kill Switch + Quarantine + Circuit Breakers) +
+**M3** (`@aok/store`: Event Store/Projections/Checkpoints/Evidence + DurableLedger + System Resurrection Test حقيقي).
+التسلسل الملزم: **Orchestrator + Workflow → Queue → Model Gateway → Memory/RAG → Identity → Observability → M4 Free Deployment → M5 Real E2E + CI → M6 Monetization**.

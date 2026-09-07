@@ -19,6 +19,7 @@ export const LAYERS = {
   runtime: ['runtime/scheduler', 'runtime/sandbox'],
   plugins: ['plugins/agents', 'plugins/tools', 'plugins/tools/github', 'plugins/models', 'plugins/memory', 'plugins/verification'],
   adapters: ['adapters/vault', 'adapters/billing'],
+  storage: ['storage/store'],
   apps: ['apps/cli'],
 } as const;
 
@@ -31,7 +32,8 @@ export const ALLOWED_DEPS: Record<LayerName, LayerName[]> = {
   runtime: ['contracts', 'kernel', 'immune'],
   plugins: ['contracts', 'kernel', 'runtime'],
   adapters: ['contracts'],
-  apps: ['contracts', 'kernel', 'immune', 'runtime', 'plugins', 'adapters'],
+  storage: ['contracts', 'kernel'],
+  apps: ['contracts', 'kernel', 'immune', 'runtime', 'plugins', 'adapters', 'storage'],
 };
 
 export function layerOfPackage(pkgDir: string): LayerName | undefined {

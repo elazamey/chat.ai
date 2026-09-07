@@ -1,20 +1,22 @@
-import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { describe, it, expect, afterEach } from 'vitest';
+import { readFileSync, mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parse as parseYaml } from 'yaml';
 import { LocalRunner, FREE_BUDGET } from '@aok/cli';
-import { Ledger } from '@aok/events';
+import { Ledger, type Ledger as LedgerType } from '@aok/events';
 import { ImmuneGate, ImmuneRuntime, RecoveryEngine, IntegrityGuardian } from '@aok/immune';
 import { computeGenesisHash } from '@aok/provenance';
+import { SqliteEventStore, DurableLedger, projectSystem } from '@aok/store';
 import type { ApprovalPolicy, LedgerEvent } from '@aok/contracts';
-import { FakeGitHub, DeterministicClock, replayInto, replayMatches, projectRun } from './index';
+import { FakeGitHub, DeterministicClock, replayInto, replayMatches, hashesOf, projectRun } from './index';
 
 /**
  * FULL SYSTEM ACCEPTANCE (26 خطوة) — محليًا بـ$0، مع حقن الفشل والهجوم:
  *   ATTACK/FAILURE → DETECT → CONTAIN → RECORD → RECOVER → VERIFY → RESUME / FAIL-SAFE
  *
- * إذا نجح هذا السيناريو: لدينا System وليس مجرد Packages.
+ * خطوات kill/restart/replay هنا **حقيقية** (SQLite EventStore دائم) — M3.
  */
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -27,8 +29,24 @@ const approvalPolicy: ApprovalPolicy = {
   'github.pull_request.create': 'approval',
 };
 
-function buildSystem() {
-  const runner = new LocalRunner({ approvalPolicy, onApprovalRequired: async () => true });
+const tempDirs: string[] = [];
+function tempDir(): string {
+  const d = mkdtempSync(join(tmpdir(), 'aok-acceptance-'));
+  tempDirs.push(d);
+  return d;
+}
+afterEach(() => {
+  for (const d of tempDirs.splice(0)) {
+    try {
+      rmSync(d, { recursive: true, force: true });
+    } catch {
+      /* ignore */
+    }
+  }
+});
+
+function buildSystem(ledger?: LedgerType) {
+  const runner = new LocalRunner({ ledger, approvalPolicy, onApprovalRequired: async () => true });
   const github = new FakeGitHub();
   github.ensureRepo('fake/repo', { 'README.md': '# hello' });
   github.register(runner);
@@ -54,15 +72,19 @@ interface Step {
   note?: string;
 }
 
-describe('Full System Acceptance — 26 steps, local $0, with chaos & attacks', () => {
-  it('passes the whole resurrection scenario', async () => {
+describe('Full System Acceptance — 26 steps, local $0, durable store, with chaos & attacks', () => {
+  it('passes the whole resurrection scenario (real kill/restart/replay)', async () => {
     const steps: Step[] = [];
     const ok = (name: string, cond: boolean, note?: string) => {
       steps.push({ name, ok: cond, note: cond ? note : note ?? 'assertion failed' });
     };
 
-    // 1-3) clean checkout + $0 build + local runner
-    const { runner, github } = buildSystem();
+    // 1-3) clean checkout + $0 build + local runner (على EventStore دائم)
+    const dbPath = join(tempDir(), 'events.db');
+    const store1 = new SqliteEventStore(dbPath);
+    const durable = new DurableLedger(store1);
+    await durable.hydrate();
+    const { runner, github } = buildSystem(durable);
     ok('01. start from clean checkout', runner.ledger.length === 0);
     ok('02. build with $0 external spend', runner.mockProvider.models.every((m) => m.costPer1kInputUsd === 0));
     ok('03. start local runner', typeof runner.run === 'function' && runner.immune !== undefined);
@@ -89,26 +111,33 @@ describe('Full System Acceptance — 26 steps, local $0, with chaos & attacks', 
     ok('12. create PR', github.pullRequests.length === 1);
     ok('13. verify result', outcome.verdict === 'PASSED' && outcome.verification.evidence.length > 0);
 
-    // 14) export evidence (the ledger IS the evidence)
+    // 14) export evidence — الـLedger المُثبَّت هو الدليل
     const exported: LedgerEvent[] = outcome.ledger;
-    ok('14. export evidence', exported.length > 0 && outcome.verification.evidence.length > 0);
+    ok('14. export evidence', exported.length > 0 && (await store1.lastSeq()) === exported.length);
 
-    // 15-19) System Resurrection: kill → restart → replay → restore → verify
-    ok('15. kill runner', true, 'simulated: reference dropped (in-memory ledger exported)');
-    ok('16. restart runner', true, 'simulated: fresh Ledger constructed');
-    const { ledger: replayedLedger, replayed } = replayInto(exported);
-    ok('17. replay run', replayMatches(exported, replayed) && replayedLedger.merkleRoot() === runner.ledger.merkleRoot());
-    ok('18. restore state', projectRun(replayed).status === 'COMPLETED');
-    ok('19. verify integrity', replayedLedger.verifyIntegrity().valid === true);
+    // 15-19) System Resurrection حقيقي: kill → restart → replay → restore → verify
+    await store1.close(); // "قتل" الـrunner (المتجر الدائم باقٍ على القرص)
+    ok('15. kill runner', true, 'event store closed (durable file remains on disk)');
 
-    // 20-21) malicious plugin → quarantine (DETECT → CONTAIN → RECORD)
-    runner.grant({ id: 'g-secret', principal: 'coder', capability: 'secret.read', scope: '*', effect: 'allow' });
-    const evil = await runner.run('malicious plugin reads secrets', { plan: ['secret.read'], actorTrust: 'UNKNOWN' });
-    const evilTypes = runner.ledger.all.map((e) => e.type);
+    const store2 = new SqliteEventStore(dbPath);
+    const ledger2 = new DurableLedger(store2);
+    await ledger2.hydrate(); // "إعادة التشغيل" — إعادة بناء السلسلة من القرص
+    ok('16. restart runner', true, 'new ledger hydrated from the durable store');
+
+    ok('17. replay run', hashesOf(ledger2.all).join('') === hashesOf(exported).join('') && ledger2.length === exported.length);
+    ok('18. restore state', projectSystem(ledger2.all).runs.completed === 1 && projectRun(ledger2.all).status === 'COMPLETED');
+    ok('19. verify integrity', ledger2.verifyIntegrity().valid === true && ledger2.merkleRoot() === runner.ledger.merkleRoot());
+    await store2.close();
+
+    // 20-21) malicious plugin → quarantine (DETECT → CONTAIN → RECORD) — على نظام مُعاد الإقلاع
+    const attacker = buildSystem();
+    attacker.runner.grant({ id: 'g-secret', principal: 'coder', capability: 'secret.read', scope: '*', effect: 'allow' });
+    const evil = await attacker.runner.run('malicious plugin reads secrets', { plan: ['secret.read'], actorTrust: 'UNKNOWN' });
+    const evilTypes = attacker.runner.ledger.all.map((e) => e.type);
     ok('20. trigger malicious plugin', evilTypes.includes('ImmuneBlocked') && evil.verdict === 'FAILED');
     ok(
       '21. quarantine it',
-      runner.immune.quarantine.isQuarantined('coder') && evilTypes.includes('immune.incident.detected'),
+      attacker.runner.immune.quarantine.isQuarantined('coder') && evilTypes.includes('immune.incident.detected'),
       'quarantined + incident evidence recorded in the append-only ledger',
     );
 
@@ -146,7 +175,6 @@ describe('Full System Acceptance — 26 steps, local $0, with chaos & attacks', 
     const failed = steps.filter((s) => !s.ok);
     ok('26. final report PASS', failed.length === 0, `${steps.length - failed.length}/${steps.length} passed`);
 
-    // التقرير القابل للقراءة
     for (const s of steps) console.log(`${s.ok ? '✓' : '✗'} ${s.name}${s.note ? ` — ${s.note}` : ''}`);
     expect(
       failed.map((f) => f.name),
@@ -200,5 +228,13 @@ describe('Chaos loop — ATTACK/FAILURE → DETECT → CONTAIN → RECORD → RE
   it('deterministic clock drives reproducible chaos scheduling', () => {
     const clock = new DeterministicClock(0, 1000);
     expect([clock.now(), clock.now(), clock.now()]).toEqual([0, 1000, 2000]);
+  });
+
+  it('replay into a fresh ledger reproduces the identical hash chain', () => {
+    const original = new Ledger();
+    original.append({ actor: { type: 'system', id: 'k' }, type: 'RunCreated', taskId: 't', runId: 'r', payload: { i: 1 } });
+    original.append({ actor: { type: 'system', id: 'k' }, type: 'TaskCompleted', taskId: 't', runId: 'r', payload: { i: 1 } });
+    const { replayed } = replayInto(original.all);
+    expect(replayMatches(original.all, replayed)).toBe(true);
   });
 });

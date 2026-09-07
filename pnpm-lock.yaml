@@ -213,6 +213,15 @@ importers:
         specifier: workspace:*
         version: link:../../kernel/contracts
 
+  storage/store:
+    dependencies:
+      '@aok/contracts':
+        specifier: workspace:*
+        version: link:../../kernel/contracts
+      '@aok/events':
+        specifier: workspace:*
+        version: link:../../kernel/events
+
   tests/architecture:
     dependencies:
       '@aok/provenance':
@@ -249,6 +258,9 @@ importers:
       '@aok/provenance':
         specifier: workspace:*
         version: link:../../kernel/provenance
+      '@aok/store':
+        specifier: workspace:*
+        version: link:../../storage/store
       yaml:
         specifier: ^2.5.0
         version: 2.9.0

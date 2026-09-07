@@ -1,5 +1,5 @@
 {
-  "name": "@aok/harness",
+  "name": "@aok/store",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -13,12 +13,6 @@
   },
   "dependencies": {
     "@aok/contracts": "workspace:*",
-    "@aok/events": "workspace:*",
-    "@aok/execution": "workspace:*",
-    "@aok/immune": "workspace:*",
-    "@aok/provenance": "workspace:*",
-    "@aok/store": "workspace:*",
-    "@aok/cli": "workspace:*",
-    "yaml": "^2.5.0"
+    "@aok/events": "workspace:*"
   }
 }

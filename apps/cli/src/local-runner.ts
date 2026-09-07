@@ -57,6 +57,8 @@ export interface RunnerOptions {
   budget?: BudgetPolicy;
   grants?: Grant[];
   approvalPolicy?: ApprovalPolicy;
+  /** الـLedger (اختياري): مرّر DurableLedger لتثبيت الأحداث في EventStore دائم. */
+  ledger?: Ledger;
   onApprovalRequired?: (req: ApprovalRequest) => Promise<boolean> | boolean;
   billing?: BillingAdapter;
   /** حارس الأسماء (Namespace + Schema Registry) — يرفض قدرات غير مسجّلة/محجوزة. */
@@ -106,7 +108,7 @@ export interface RunTaskOptions {
  * (CELIA_MODE=cloud يبدّل adapters لاحقًا دون تغيير النواة.)
  */
 export class LocalRunner {
-  readonly ledger = new Ledger();
+  readonly ledger: Ledger;
   readonly meter = new InMemoryUsageMeter();
   readonly executors = new ExecutorRegistry();
   readonly verifier = new VerificationEngine();
@@ -124,6 +126,7 @@ export class LocalRunner {
   private capabilityGuard?: CapabilityGuard;
 
   constructor(opts: RunnerOptions = {}) {
+    this.ledger = opts.ledger ?? new Ledger();
     this.mode = opts.mode ?? modeFromEnv();
     this.quota = new BudgetQuota(opts.budget ?? FREE_BUDGET);
     this.policy = new PolicyEngine(opts.grants ?? [], opts.approvalPolicy ?? DEFAULT_APPROVAL_POLICY);
@@ -272,6 +275,9 @@ export class LocalRunner {
     const usage = this.meter.usage();
     await this.billing.report(usage);
 
+    // 7) تثبيت الأحداث في الـEventStore الدائم (إن كان الـLedger دائمًا)
+    await this.flush();
+
     return {
       runId,
       taskId,
@@ -303,6 +309,12 @@ export class LocalRunner {
   private principalFor(actorId: string, trust: 'UNKNOWN' | 'SUSPICIOUS' | 'VERIFIED' | 'TRUSTED' = 'VERIFIED'): Principal {
     // الوكيل المهيأ بواسطة الـrunner: هوية معلنة، ثقة VERIFIED (ليست UNKNOWN→privileged).
     return { id: actorId, type: 'agent', trust, credentials: [] };
+  }
+
+  /** يثبّت الأحداث المعلقة في الـEventStore الدائم (no-op للـLedger العادي). */
+  async flush(): Promise<void> {
+    const l = this.ledger as Ledger & { flush?: () => Promise<void> };
+    await l.flush?.();
   }
 
   private resolveInput(step: RunStep, results: Result[]): unknown {

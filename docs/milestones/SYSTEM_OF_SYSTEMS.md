@@ -52,7 +52,7 @@ INTELLIGENCE            EXECUTION                TRUST
 | GitHub Adapter | ✅ M2 | — |
 | Model Gateway | جزئي — `ModelRouter` + `MockProvider` | retry/fallback/rate-limit/circuit-breaker على الـoutage |
 | Memory | جزئي — `InMemoryStore` + `InMemoryKnowledgeStore` (provenance) | write policy/retention/expiration/confidence/verification/deletion |
-| Storage | ❌ `storage/` فارغ | Postgres event-store + projections |
+| Storage | ✅ `@aok/store` — SQLite (dev/test) + Postgres adapter + Projections/Checkpoints/Evidence + DurableLedger | ربط الإسقاطات بالـAPI/الـRunner تلقائيًا |
 | Observability | جزئي — Ledger (audit) + immune Health/Metrics | logs/metrics/traces + correlation (traceId) |
 | Recovery | جزئي — immune `RecoveryEngine` + breakers | Reliability Engine (bulkhead/fallback/rollback/compensation) |
 | Incident | ✅ immune `IncidentEngine` | root cause/postmortem/remediation |
@@ -113,8 +113,10 @@ ATTACK/FAILURE → DETECT → CONTAIN → RECORD → RECOVER → VERIFY → RESU
 
 ---
 
-## 4. التنفيذ الحالي (هذه الجولة)
+## 4. التنفيذ الحالي
 
-- `tests/harness/` (`@aok/harness`) — العضو رقم 30: Mock World · Failure Injection · Chaos · Replay · Deterministic Clock/IDs · Fake GitHub/Model/Vault.
-- `System Resurrection Test` — سيناريو القبول محليًا بـ$0 فوق الأنظمة المكتملة (Kernel+Immune+Economics+Policy+Verification+Ledger+Ownership) مع حقن الفشل والتحقق من الحلقة.
-- الخطة أعلاه تُنفَّذ تباعًا: **M3 أولًا** (الخطوة 1)، ثم Orchestrator/Workflow/Queue، ثم الباقي.
+- ✅ **Test Harness** — `tests/harness/` (`@aok/harness`): Mock World · Failure Injection · Chaos · Replay · Deterministic Clock/IDs · Fake GitHub/Model/Vault.
+- ✅ **M3 Persistent Event Store + Storage** — `storage/store/` (`@aok/store`): `EventStore` + `ProjectionStore` + `CheckpointStore` + `EvidenceStore`
+  (SQLite dev/test عبر `node:sqlite`، و`PostgresEventStore` خلف `SqlDriver` للإنتاج) + `DurableLedger` (hydrate/flush/tamper-evident).
+- ✅ **System Resurrection Test** — سيناريو القبول 26 خطوة محليًا بـ$0، وخطوات kill/restart/replay أصبحت **حقيقية** (SQLite دائم) مع حقن الهجوم/الفشل والحلقة الكاملة.
+- ⏭️ التالي: **Orchestrator + Workflow Executor** (الخطوة 2)، ثم Queue، ثم Model Gateway، ثم Memory/RAG، ثم Identity.
