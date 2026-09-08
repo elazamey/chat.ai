@@ -1,0 +1,52 @@
+name: "Real GitHub E2E"
+
+on:
+  workflow_dispatch:
+    inputs:
+      owner:
+        description: GitHub repository owner
+        required: true
+        default: elazamey
+      repo:
+        description: GitHub repository name
+        required: true
+        default: chat.ai
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  real-e2e:
+    name: "Real GitHub E2E"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Run real E2E
+        env:
+          CELIA_E2E_REAL: "1"
+          CELIA_E2E_OWNER: ${{ inputs.owner }}
+          CELIA_E2E_REPO: ${{ inputs.repo }}
+          CELIA_E2E_REPORT_DIR: e2e-artifacts
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: pnpm exec vitest run apps/cli/src/github-e2e.real.test.ts
+
+      - name: Publish E2E report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: real-github-e2e-report
+          path: e2e-artifacts/
+          if-no-files-found: error

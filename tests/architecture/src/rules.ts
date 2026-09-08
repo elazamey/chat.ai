@@ -37,7 +37,7 @@ export const ALLOWED_DEPS: Record<LayerName, LayerName[]> = {
 };
 
 export function layerOfPackage(pkgDir: string): LayerName | undefined {
-  const rel = relative(REPO_ROOT, pkgDir);
+  const rel = relative(REPO_ROOT, pkgDir).replaceAll('\\', '/');
   for (const [layer, dirs] of Object.entries(LAYERS)) {
     if ((dirs as readonly string[]).includes(rel)) return layer as LayerName;
   }
