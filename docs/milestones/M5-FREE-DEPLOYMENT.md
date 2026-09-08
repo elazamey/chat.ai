@@ -21,7 +21,7 @@ BYOK: لا تبيع Tokens — النموذج $0 حتمي (MockProvider) أو م
 ```text
 [x] بوابة $0 على checkout نظيف          (CI: pnpm frozen install + typecheck + test)
 [x] صورة حاوية واحدة من جذر المستودع    (Dockerfile + .dockerignore)
-[ ] CI: بناء الحاوية + smoke داخلها      (celia health + celia run — --network none)
+[x] CI: بناء الحاوية + smoke داخلها      (celia health + celia run — --network none)
 [ ] توثيق مسارات النشر المجانية          (docs/deployment/: local · container · free tier)
 [ ] صورة multi-stage محسّنة              (بعد ثبوت البوابة — تحسين، لا شرط)
 [ ] النشر الفعلي على طبقة مجانية (Workers/Pages للـControl Plane)  (عقد §18 "قادم")
@@ -43,8 +43,8 @@ clean checkout → pnpm install --frozen-lockfile → typecheck → test
 ## المسار
 
 ```text
-(1) Dockerfile + .dockerignore + ci.yml          ← هذا الـcommit
-(2) ملاحظة CI خضراء على البوابة كاملة
+(1) Dockerfile + .dockerignore + ci.yml          ✅
+(2) ملاحظة CI خضراء على البوابة كاملة      ✅ (PR #9: Build+Verify 38s · Container 25s)
 (3) docs/deployment/FREE_DEPLOYMENT.md (مسارات: local dev · container · free tier)
 (4) multi-stage image + حجم صورة مُوثَّق
 (5) Control Plane على طبقة مجانية (عقد §7: Cloud → Your Runner)
