@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ModelProvider } from '@aok/contracts';
 import { MockProvider } from './provider';
-import { ModelGateway } from './gateway';
+import { GatewayInvocationError, ModelGateway } from './gateway';
 import { ModelRouter, stubProvider } from './router';
 
 function failingProvider(): ModelProvider {
@@ -46,8 +46,39 @@ describe('ModelGateway', () => {
 
   it('reports all provider failures with an auditable attempt list', async () => {
     const gateway = new ModelGateway(new ModelRouter(), [failingProvider()]);
-    await expect(
-      gateway.invoke({ requirement: { taskType: 'coding' }, input: { taskType: 'coding' } }),
-    ).rejects.toMatchObject({ attempts: ['failing'] });
+    await expect(gateway.invoke({ requirement: { taskType: 'coding' }, input: { taskType: 'coding' } })).rejects.toMatchObject({
+      attempts: ['failing'],
+      cause: { message: 'provider unavailable' },
+    });
+  });
+
+  it('preserves the provider failure when router candidates are not registered in the gateway', async () => {
+    const router = new ModelRouter([
+      stubProvider('unregistered', [
+        {
+          id: 'unregistered-1',
+          providerId: 'unregistered',
+          contextWindow: 1000,
+          maxOutputTokens: 100,
+          supportsTools: false,
+          supportsStructuredOutput: false,
+          costPer1kInputUsd: 0,
+          costPer1kOutputUsd: 0,
+          latencyMs: 1,
+          capabilities: ['completion'],
+        },
+      ]),
+    ]);
+    const gateway = new ModelGateway(router, [failingProvider()]);
+
+    const error = await gateway
+      .invoke({ requirement: { taskType: 'coding' }, input: { taskType: 'coding' } })
+      .catch((cause) => cause);
+
+    expect(error).toBeInstanceOf(GatewayInvocationError);
+    expect(error).toMatchObject({
+      attempts: ['failing'],
+      cause: { message: 'provider unavailable' },
+    });
   });
 });

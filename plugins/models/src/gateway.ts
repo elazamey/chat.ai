@@ -44,6 +44,7 @@ export class ModelGateway {
 
   async invoke(request: GatewayRequest): Promise<GatewayResponse> {
     const attempts: string[] = [];
+    let lastError: unknown = new Error('no provider available');
     const preferred = request.requirement.preferredProviders ?? [];
     const candidates = this.router.candidates(request.requirement).sort((a, b) => {
       const aRank = preferred.indexOf(a.providerId);
@@ -68,11 +69,11 @@ export class ModelGateway {
           attempts,
         };
       } catch (error) {
-        if (attempts.length === candidates.length) throw new GatewayInvocationError(attempts, error);
+        lastError = error;
       }
     }
 
-    throw new GatewayInvocationError(attempts, new Error('no provider available'));
+    throw new GatewayInvocationError(attempts, lastError);
   }
 
 }
