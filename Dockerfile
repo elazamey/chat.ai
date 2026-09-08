@@ -19,6 +19,7 @@ WORKDIR /app
 ENV CELIA_MODE=local
 
 RUN corepack enable
+RUN corepack install --global pnpm@9.15.0
 COPY --chown=node:node --from=builder /app/package.json /app/pnpm-lock.yaml /app/pnpm-workspace.yaml ./
 COPY --chown=node:node --from=builder /app/node_modules ./node_modules
 COPY --chown=node:node --from=builder /app/apps ./apps
