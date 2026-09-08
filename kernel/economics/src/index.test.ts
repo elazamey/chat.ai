@@ -24,6 +24,14 @@ describe('InMemoryUsageMeter', () => {
     m.record({ resource: 'runs', amount: 1, at: 1, actorId: 'a', runId: 'r' });
     expect(m.history()).toHaveLength(1);
   });
+
+  it('notifies an audit sink after each usage event is recorded', () => {
+    const recorded: number[] = [];
+    const m = new InMemoryUsageMeter((_event, usage) => recorded.push(usage.total.tool_calls));
+    m.record({ resource: 'tool_calls', amount: 1, at: 1, actorId: 'a', runId: 'r' });
+    m.record({ resource: 'tool_calls', amount: 2, at: 2, actorId: 'a', runId: 'r' });
+    expect(recorded).toEqual([1, 3]);
+  });
 });
 
 describe('BudgetQuota', () => {

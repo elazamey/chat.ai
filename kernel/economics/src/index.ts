@@ -22,9 +22,12 @@ export class InMemoryUsageMeter implements UsageMeter {
   private total: Record<UsageResource, number> = { ...EMPTY };
   private events: UsageEvent[] = [];
 
+  constructor(private readonly onRecord?: (event: UsageEvent, usage: Usage) => void) {}
+
   record(event: UsageEvent): void {
     this.total[event.resource] += event.amount;
     this.events.push(event);
+    this.onRecord?.(event, this.usage());
   }
 
   usage(): Usage {

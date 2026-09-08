@@ -109,7 +109,7 @@ export interface RunTaskOptions {
  */
 export class LocalRunner {
   readonly ledger: Ledger;
-  readonly meter = new InMemoryUsageMeter();
+  readonly meter: InMemoryUsageMeter;
   readonly executors = new ExecutorRegistry();
   readonly verifier = new VerificationEngine();
   readonly mockProvider = new MockProvider();
@@ -127,6 +127,15 @@ export class LocalRunner {
 
   constructor(opts: RunnerOptions = {}) {
     this.ledger = opts.ledger ?? new Ledger();
+    this.meter = new InMemoryUsageMeter((event, usage) => {
+      this.ledger.append({
+        actor: systemActor,
+        type: 'UsageRecorded',
+        taskId: event.runId,
+        runId: event.runId,
+        payload: { event, usage },
+      });
+    });
     this.mode = opts.mode ?? modeFromEnv();
     this.quota = new BudgetQuota(opts.budget ?? FREE_BUDGET);
     this.policy = new PolicyEngine(opts.grants ?? [], opts.approvalPolicy ?? DEFAULT_APPROVAL_POLICY);

@@ -38,6 +38,13 @@ function buildRunner(overrides: Partial<ConstructorParameters<typeof LocalRunner
 }
 
 describe('LocalRunner — vertical slice, local at $0', () => {
+  it('records metering events in the tamper-evident ledger', async () => {
+    const runner = buildRunner();
+    await runner.run('metered task');
+    expect(runner.ledger.all.filter((event) => event.type === 'UsageRecorded').length).toBeGreaterThan(0);
+    expect(runner.ledger.verifyIntegrity()).toEqual({ valid: true });
+  });
+
   it('runs intent → plan → execute → verify → completed, fully locally', async () => {
     const runner = buildRunner();
     const outcome = await runner.run('fix auth and open a PR');
