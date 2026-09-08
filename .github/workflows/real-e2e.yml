@@ -40,7 +40,7 @@ jobs:
           CELIA_E2E_OWNER: ${{ inputs.owner }}
           CELIA_E2E_REPO: ${{ inputs.repo }}
           CELIA_E2E_REPORT_DIR: e2e-artifacts
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ secrets.E2E_GH_TOKEN }}
         run: pnpm exec vitest run apps/cli/src/github-e2e.real.test.ts
 
       - name: Publish E2E report
