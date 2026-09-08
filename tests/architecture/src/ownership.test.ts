@@ -105,8 +105,21 @@ describe('Ownership Tests', () => {
         external.add(name);
       }
     }
+    // Exact package-name match against rows of the "## السجل" table — a
+    // substring match lets an undeclared short name (`vite`) pass via a
+    // longer declared one (`vitest`). (Gate C finding F-03.)
+    const registrySection = notices.split(/^## /m).find((s) => s.startsWith('السجل')) ?? '';
+    const declared = new Set(
+      registrySection
+        .split('\n')
+        .map((line) => /^\|\s*([^|]+?)\s*\|/.exec(line)?.[1]?.trim())
+        .filter((cell): cell is string => !!cell && cell !== '---' && cell !== 'الحزمة'),
+    );
     for (const name of external) {
-      expect(notices, `dependency '${name}' must be declared in THIRD_PARTY_NOTICES.md`).toContain(name);
+      expect(
+        declared.has(name),
+        `dependency '${name}' must be declared as its own row in THIRD_PARTY_NOTICES.md`,
+      ).toBe(true);
     }
   });
 
