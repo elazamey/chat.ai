@@ -161,6 +161,7 @@ export class IdentityService {
   authenticate(tokenId: string): AuthenticatedPrincipal {
     const token = this.stateValue.tokens.find((candidate) => candidate.id === tokenId);
     if (!token || token.revokedAt) throw new Error('token is revoked or unknown');
+    if (new Date(token.expiresAt).getTime() <= Date.now()) throw new Error('token is expired');
     const session = this.requireSession(token.sessionId);
     if (session.status !== 'active' || new Date(session.expiresAt).getTime() <= Date.now()) {
       throw new Error('session is expired or revoked');
@@ -196,10 +197,6 @@ export class IdentityService {
       expiresAt: token.expiresAt,
     };
     this.append(type, actor, payload);
-  }
-
-  private requireActor(actor: IdentityEventActor): void {
-    this.requireOrganization(actor.organizationId);
   }
 
   private requireOrganization(id: string): Organization {

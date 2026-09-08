@@ -38,6 +38,21 @@ describe('@aok/identity', () => {
     expect(() => service.grantMembership(actor, user.id, ['admin'])).toThrow(/cross-tenant/);
   });
 
+  it('rejects expired tokens even when their session is active', () => {
+    const { service, actor } = setup();
+    const user = service.createUser(actor, 'user@example.com', 'User');
+    service.grantMembership(actor, user.id, ['member']);
+    const session = service.createSession(actor, user.id, '2999-01-01T00:00:00.000Z');
+    const token = service.issueToken(
+      actor,
+      session.id,
+      { id: 'vault:token', vault: 'test', key: 'token' },
+      '2020-01-01T00:00:00.000Z',
+    );
+
+    expect(() => service.authenticate(token.id)).toThrow(/token is expired/);
+  });
+
   it('keeps raw token values out of state and identity events', () => {
     const { service, actor } = setup();
     const user = service.createUser(actor, 'user@example.com', 'User');
