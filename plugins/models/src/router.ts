@@ -26,7 +26,7 @@ export class ModelRouter {
   }
 
   choose(req: RoutingRequirement): ModelInfo {
-    const candidates = this.discover().filter((m) => this.satisfies(m, req));
+    const candidates = this.candidates(req);
     if (candidates.length === 0) throw new NoModelAvailableError(req);
 
     const preferred = req.preferredProviders ?? [];
@@ -37,6 +37,10 @@ export class ModelRouter {
       return providerRank * 1_000_000 + m.costPer1kInputUsd * 1_000 + m.latencyMs;
     };
     return [...candidates].sort((a, b) => score(a) - score(b))[0]!;
+  }
+
+  candidates(req: RoutingRequirement): ModelInfo[] {
+    return this.discover().filter((m) => this.satisfies(m, req));
   }
 
   private satisfies(m: ModelInfo, req: RoutingRequirement): boolean {
