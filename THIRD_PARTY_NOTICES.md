@@ -26,6 +26,11 @@ BLOCKED     ← ممنوع (GPL-copyleft قسري في نواة مغلقة ال�
 | yaml | ISC | ALLOWED | قراءة PROJECT_IDENTITY.yaml |
 | tsx | MIT | ALLOWED | تشغيل CLI (dev) |
 | esbuild | MIT | ALLOWED | تبعية غير مباشرة (dev) |
+| lucide-react | ISC | ALLOWED | أيقونات واجهة `apps/console` |
+| react-dom | MIT | ALLOWED | واجهة React — `apps/console` |
+| @types/react | MIT | ALLOWED | أنواع React (dev، `apps/console`) |
+| @types/react-dom | MIT | ALLOWED | أنواع react-dom (dev، `apps/console`) |
+| @vitejs/plugin-react | MIT | ALLOWED | ملحق Vite لـ React (dev، `apps/console`) |
 
 ## أدوات التشغيل (Tooling — ليست deps في الحزم)
 
