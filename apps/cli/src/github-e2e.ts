@@ -53,6 +53,17 @@ export interface GithubE2EOutcome {
   usage: { total: Record<string, number> };
 }
 
+export class GithubE2EError extends Error {
+  constructor(
+    message: string,
+    readonly outcome: GithubE2EOutcome,
+    override readonly cause?: unknown,
+  ) {
+    super(message);
+    this.name = 'GithubE2EError';
+  }
+}
+
 /**
  * أول E2E حقيقي (M2 — REAL EXTERNAL EXECUTION):
  *
@@ -81,29 +92,31 @@ export async function runGithubE2E(cfg: GithubE2EConfig): Promise<GithubE2EOutco
 
   const intent = `افحص المستودع ${owner}/${repo} وأنشئ PR يضيف ${cfg.writePath}`;
 
-  const outcome = await runner.run(intent, {
-    steps: [
-      { action: 'github.repo.read', input: { owner, repo } },
-      {
-        action: 'github.repo.branch.create',
-        input: (results: Result[]) => {
-          const r = results[0]!.output as { defaultBranchSha: string };
-          return { owner, repo, branch, from: r.defaultBranchSha };
+  let outcome;
+  try {
+    outcome = await runner.run(intent, {
+      steps: [
+        { action: 'github.repo.read', input: { owner, repo } },
+        {
+          action: 'github.repo.branch.create',
+          input: (results: Result[]) => {
+            const r = results[0]!.output as { defaultBranchSha: string };
+            return { owner, repo, branch, from: r.defaultBranchSha };
+          },
         },
-      },
-      { action: 'github.repo.file.read', input: { owner, repo, path: cfg.readPath, ref: branch } },
-      { action: 'github.repo.file.write', input: { owner, repo, path: cfg.writePath, branch, content: cfg.fileContent, message: cfg.commitMessage } },
-      { action: 'github.git.commit', input: { owner, repo, branch, message: `${cfg.commitMessage} (empty commit)` } },
-      { action: 'github.pull_request.create', input: { owner, repo, title: cfg.prTitle, head: branch, base, body: cfg.prBody ?? '' } },
-      {
-        action: 'github.pull_request.read',
-        input: (results: Result[]) => {
-          const pr = results[5]!.output as { number: number };
-          return { owner, repo, number: pr.number };
+        { action: 'github.repo.file.read', input: { owner, repo, path: cfg.readPath, ref: branch } },
+        { action: 'github.repo.file.write', input: { owner, repo, path: cfg.writePath, branch, content: cfg.fileContent, message: cfg.commitMessage } },
+        { action: 'github.git.commit', input: { owner, repo, branch, message: `${cfg.commitMessage} (empty commit)` } },
+        { action: 'github.pull_request.create', input: { owner, repo, title: cfg.prTitle, head: branch, base, body: cfg.prBody ?? '' } },
+        {
+          action: 'github.pull_request.read',
+          input: (results: Result[]) => {
+            const pr = results[5]!.output as { number: number };
+            return { owner, repo, number: pr.number };
+          },
         },
-      },
-    ],
-    onVerify: async ({ results, runner: r }) => {
+      ],
+      onVerify: async ({ results, runner: r }) => {
       const repoInfo = results[0]?.output as { fullName: string } | undefined;
       const commit = results[4]?.output as { sha: string } | undefined;
       const pr = results[6]?.output as
@@ -155,9 +168,29 @@ export async function runGithubE2E(cfg: GithubE2EConfig): Promise<GithubE2EOutco
           verdict: r.ledger.verifyIntegrity().valid ? 'PASSED' : 'FAILED',
         },
       ];
-      return checks;
-    },
-  });
+        return checks;
+      },
+    });
+  } catch (error) {
+    const executedActions = runner.ledger.all
+      .filter((e) => e.type === 'execution.completed')
+      .map((e) => (e.payload as { action?: string }).action)
+      .filter((a): a is string => typeof a === 'string');
+    const message = error instanceof Error ? error.message : String(error);
+    throw new GithubE2EError(
+      `GitHub E2E failed after ${executedActions.at(-1) ?? 'no completed action'}: ${message}`,
+      {
+        verdict: 'FAILED',
+        checks: [{ name: 'run failure', verdict: 'FAILED', detail: message }],
+        ledgerEventTypes: runner.ledger.all.map((e) => e.type),
+        executedActions,
+        chainValid: runner.ledger.verifyIntegrity().valid,
+        merkleRoot: runner.ledger.merkleRoot(),
+        usage: runner.meter.usage(),
+      },
+      error,
+    );
+  }
 
   const pr = outcome.results[6]?.output as
     | { number: number; url: string; headSha: string }
