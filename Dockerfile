@@ -1,22 +1,34 @@
-# Stage 1: Build & Prune
+# Stage 1: Install the workspace dependencies
 FROM node:22-alpine AS builder
 WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY . .
-RUN npm run build && npm prune --production
 
-# Stage 2: Lightweight Runner
+RUN corepack enable
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps ./apps
+COPY kernel ./kernel
+COPY runtime ./runtime
+COPY plugins ./plugins
+COPY adapters ./adapters
+COPY storage ./storage
+COPY tests ./tests
+RUN pnpm install --frozen-lockfile
+
+# Stage 2: Run the local-first CLI as a non-root user
 FROM node:22-alpine AS runner
 WORKDIR /app
-ENV NODE_ENV=production
+ENV CELIA_MODE=local
 
-# Security: Use non-root user
-USER node
-
-COPY --chown=node:node --from=builder /app/package*.json ./
+RUN corepack enable
+COPY --chown=node:node --from=builder /app/package.json /app/pnpm-lock.yaml /app/pnpm-workspace.yaml ./
 COPY --chown=node:node --from=builder /app/node_modules ./node_modules
-COPY --chown=node:node --from=builder /app/dist ./dist
+COPY --chown=node:node --from=builder /app/apps ./apps
+COPY --chown=node:node --from=builder /app/kernel ./kernel
+COPY --chown=node:node --from=builder /app/runtime ./runtime
+COPY --chown=node:node --from=builder /app/plugins ./plugins
+COPY --chown=node:node --from=builder /app/adapters ./adapters
+COPY --chown=node:node --from=builder /app/storage ./storage
+COPY --chown=node:node --from=builder /app/tests ./tests
 
-EXPOSE 3000
-CMD ["node", "dist/index.js"]
+USER node
+ENTRYPOINT ["pnpm", "exec", "tsx", "apps/cli/src/cli.ts"]
+CMD ["health"]
