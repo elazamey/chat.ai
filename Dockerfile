@@ -1,29 +1,22 @@
-# Celia — Agent Operating Kernel (AOK) · M5 Free Deployment
-#
-# Single $0 image: builds from a clean checkout and runs with NO external
-# services (smoke-tested in CI with --network none).
-# Contract: ZERO_COST_ECONOMIC_CONTRACT §17/§18 (zero cost until first revenue).
-
-FROM node:22-alpine
-
-RUN corepack enable
-
+# Stage 1: Build & Prune
+FROM node:22-alpine AS builder
 WORKDIR /app
-
-# .dockerignore excludes node_modules/.git — everything else is part of the
-# image on purpose: architecture tests read the docs/contracts at runtime.
+COPY package*.json ./
+RUN npm ci
 COPY . .
+RUN npm run build && npm prune --production
 
-# Deterministic install — the lockfile is the source of truth.
-RUN pnpm install --frozen-lockfile
+# Stage 2: Lightweight Runner
+FROM node:22-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
 
-# Local-first economics: CELIA_MODE=local is the default; models are BYOK
-# or the $0 deterministic MockProvider. Secrets enter at runtime — never here.
-ENV CELIA_MODE=local
+# Security: Use non-root user
+USER node
 
-# celia CLI (ADR-0014). Examples:
-#   docker run --rm --network none celia-aok health
-#   docker run --rm --network none celia-aok run "demo task"
-#   docker run --rm --network none celia-aok ledger
-ENTRYPOINT ["pnpm", "exec", "tsx", "apps/cli/src/cli.ts"]
-CMD ["health"]
+COPY --chown=node:node --from=builder /app/package*.json ./
+COPY --chown=node:node --from=builder /app/node_modules ./node_modules
+COPY --chown=node:node --from=builder /app/dist ./dist
+
+EXPOSE 3000
+CMD ["node", "dist/index.js"]
