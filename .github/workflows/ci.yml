@@ -1,0 +1,54 @@
+name: "Free Deployment Gate"
+
+# M5 (docs/milestones/M5-FREE-DEPLOYMENT.md):
+# prove on every push/PR that a clean checkout builds and runs at $0 —
+# including the container image with --network none (no external services).
+# NOTE: not a CodeQL workflow — CodeQL default setup (repo setting) handles
+# code scanning separately; see .github/workflows/codeql.yml header.
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+jobs:
+  verify:
+    name: "Build + Verify ($0)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm run typecheck
+
+      - name: Test
+        run: pnpm test
+
+  container:
+    name: "Container build + smoke ($0, offline)"
+    runs-on: ubuntu-latest
+    needs: verify
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build image
+        run: docker build -t "celia-aok:${{ github.sha }}" .
+
+      - name: Smoke — health (no network)
+        run: docker run --rm --network none "celia-aok:${{ github.sha }}" health
+
+      - name: Smoke — run a task with the $0 MockProvider (no network)
+        run: docker run --rm --network none "celia-aok:${{ github.sha }}" run "M5 deployment smoke"

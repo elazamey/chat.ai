@@ -1,0 +1,7 @@
+# M5 Free Deployment — keep the image minimal and secret-free
+node_modules
+**/node_modules
+.git
+ownership-proof
+.e2e-artifacts
+*.log
