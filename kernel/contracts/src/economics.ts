@@ -18,6 +18,8 @@ export interface UsageEvent {
   actorId: string;
   runId: string;
   note?: string;
+  tenantId?: string;
+  userId?: string;
 }
 
 export interface Usage {
@@ -33,6 +35,19 @@ export interface BudgetPolicy {
   maxTokens?: number;
   maxRuns?: number;
   maxEstimatedCostUsd?: number;
+}
+
+export type PlanId = 'free' | 'byok';
+
+export interface UsagePlan {
+  id: PlanId;
+  budget: BudgetPolicy;
+  billingRequired: boolean;
+}
+
+export interface QuotaSubject {
+  tenantId: string;
+  userId?: string;
 }
 
 export interface UsageIncrement {

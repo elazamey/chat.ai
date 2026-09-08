@@ -20,3 +20,17 @@ export class InMemoryBillingAdapter implements BillingAdapter {
     this.reports.push(usage);
   }
 }
+
+/** Deterministic billing stub for integration tests; never calls a payment provider. */
+export class MockBillingAdapter implements BillingAdapter {
+  readonly reports: Usage[] = [];
+  readonly suspended = new Set<string>();
+
+  async report(usage: Usage): Promise<void> {
+    this.reports.push(usage);
+  }
+
+  suspend(subjectId: string): void {
+    this.suspended.add(subjectId);
+  }
+}
