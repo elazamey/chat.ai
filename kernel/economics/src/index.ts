@@ -6,6 +6,8 @@ import type {
   UsageIncrement,
   UsageMeter,
   UsageResource,
+  QuotaSubject,
+  UsagePlan,
 } from '@aok/contracts';
 
 const EMPTY: Record<UsageResource, number> = {
@@ -53,6 +55,7 @@ export class BudgetQuota implements QuotaPolicy {
     if (next > limit) {
       return { allowed: false, reason: `${increment.resource} quota exceeded (${next} > ${limit})` };
     }
+
     return { allowed: true, reason: 'within budget' };
   }
 
@@ -73,5 +76,60 @@ export class BudgetQuota implements QuotaPolicy {
       default:
         return undefined;
     }
+  }
+}
+
+export const FREE_PLAN: UsagePlan = {
+    id: 'free',
+    billingRequired: false,
+    budget: {
+      maxExecutionSeconds: 300,
+      maxToolCalls: 100,
+      maxModelCalls: 20,
+      maxNetworkRequests: 20,
+      maxRuns: 10,
+    },
+};
+
+export const BYOK_PLAN: UsagePlan = {
+    id: 'byok',
+    billingRequired: false,
+    budget: {
+      maxExecutionSeconds: 3_600,
+      maxToolCalls: 1_000,
+      maxModelCalls: 200,
+      maxNetworkRequests: 200,
+      maxRuns: 100,
+    },
+};
+
+export class PlanCatalog {
+    constructor(private readonly plans: readonly UsagePlan[] = [FREE_PLAN, BYOK_PLAN]) {}
+
+    get(id: UsagePlan['id']): UsagePlan {
+      const plan = this.plans.find((candidate) => candidate.id === id);
+      if (!plan) throw new Error(`unknown usage plan: ${id}`);
+      return plan;
+    }
+}
+
+/** Tenant-scoped quota state; callers must check before dispatching external work. */
+export class TenantQuota {
+    private readonly usageByTenant = new Map<string, Usage>();
+
+  constructor(private readonly plans = new PlanCatalog()) {}
+
+  usage(subject: QuotaSubject): Usage {
+    return this.usageByTenant.get(subject.tenantId) ?? { total: { ...EMPTY } };
+  }
+
+  allows(subject: QuotaSubject, planId: UsagePlan['id'], increment: UsageIncrement): { allowed: boolean; reason: string } {
+    return new BudgetQuota(this.plans.get(planId).budget).allows(this.usage(subject), increment);
+  }
+
+  record(subject: QuotaSubject, event: UsageEvent): void {
+    const current = this.usage(subject);
+    current.total[event.resource] += event.amount;
+    this.usageByTenant.set(subject.tenantId, current);
   }
 }

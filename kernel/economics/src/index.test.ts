@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { InMemoryUsageMeter, BudgetQuota } from './index';
+import { InMemoryUsageMeter, BudgetQuota, BYOK_PLAN, FREE_PLAN, PlanCatalog, TenantQuota } from './index';
 import type { BudgetPolicy } from '@aok/contracts';
 
 const budget: BudgetPolicy = {
@@ -40,6 +40,24 @@ describe('BudgetQuota', () => {
     const current = { total: { tool_calls: 2 } as never };
     expect(q.allows(current, { resource: 'tool_calls', amount: 1 }).allowed).toBe(true);
     expect(q.allows(current, { resource: 'tool_calls', amount: 2 }).allowed).toBe(false);
+  });
+
+  describe('plans and tenant quotas', () => {
+    it('exposes explicit free and BYOK plans', () => {
+      const plans = new PlanCatalog();
+      expect(plans.get('free')).toEqual(FREE_PLAN);
+      expect(plans.get('byok')).toEqual(BYOK_PLAN);
+    });
+
+    it('tracks and enforces usage independently per tenant', () => {
+      const quotas = new TenantQuota();
+      const subject = { tenantId: 'tenant-a', userId: 'user-a' };
+      quotas.record(subject, { resource: 'tool_calls', amount: 1, at: 1, actorId: 'user-a', runId: 'run-a' });
+      expect(quotas.usage(subject).total.tool_calls).toBe(1);
+      expect(quotas.usage({ tenantId: 'tenant-b' }).total.tool_calls).toBe(0);
+      expect(quotas.allows(subject, 'free', { resource: 'tool_calls', amount: 99 }).allowed).toBe(true);
+      expect(quotas.allows(subject, 'free', { resource: 'tool_calls', amount: 100 }).allowed).toBe(false);
+    });
   });
 
   it('maps each resource to its budget field', () => {

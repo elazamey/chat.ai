@@ -13,3 +13,10 @@ The existing `InMemoryUsageMeter` and `BudgetQuota` remain provider-neutral. Bil
 - Ledger integrity remains valid after metering events are appended.
 - Quota enforcement remains pre-execution and rejects increments over the configured budget.
 - Local tests use no paid API keys or cloud credentials.
+
+## Follow-up plans and billing increment
+
+- `free` is the default zero-cost plan.
+- `byok` increases local limits without requiring a platform API key.
+- `TenantQuota` keeps usage isolated by `tenantId` and supports an optional `userId`.
+- `MockBillingAdapter` is test-only and records reports/suspension state without contacting a payment provider.
