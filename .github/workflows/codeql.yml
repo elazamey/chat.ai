@@ -11,13 +11,18 @@
 #
 name: "CodeQL Advanced"
 
+# NOTE (2026-09-08): This repository has Code Scanning "default setup" enabled,
+# which rejects SARIF uploads from committed advanced-setup CodeQL workflows:
+#   "CodeQL analyses from advanced configurations cannot be processed when the
+#    default setup is enabled"
+# Default setup already scans javascript-typescript + actions on every push/PR
+# (its managed "CodeQL" check passes), so the automatic runs below were only
+# producing a red check on every commit. The workflow is kept for a future
+# switch to advanced setup: do
+#   Settings -> Security -> Advanced Security -> CodeQL analysis -> "Switch to advanced",
+# then restore the push/pull_request/schedule triggers here.
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-  schedule:
-    - cron: '19 19 * * 6'
+  workflow_dispatch:
 
 jobs:
   analyze:
