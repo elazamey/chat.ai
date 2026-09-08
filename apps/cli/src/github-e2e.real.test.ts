@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { runGithubE2E, runRepoTests } from './github-e2e';
+import { GithubE2EError, runGithubE2E, runRepoTests } from './github-e2e';
 
 /**
  * E2E حقيقي ضد GitHub (M2 — REAL EXTERNAL EXECUTION).
@@ -35,25 +35,44 @@ function writeReport(outcome: Awaited<ReturnType<typeof runGithubE2E>>): void {
   );
 }
 
+function failureReport(error: unknown): Awaited<ReturnType<typeof runGithubE2E>> {
+  const detail = error instanceof Error ? error.message : String(error);
+  return {
+    verdict: 'FAILED',
+    checks: [{ name: 'run failure', verdict: 'FAILED', detail }],
+    ledgerEventTypes: [],
+    executedActions: [],
+    chainValid: false,
+    merkleRoot: 'unavailable',
+    usage: { total: {} },
+  };
+}
+
 describe.skipIf(!enabled)('REAL GitHub E2E (M2)', () => {
   it(
     'inspects the repo, opens a PR changing a specific file, and verifies with evidence',
     async () => {
       const stamp = Date.now();
-      const outcome = await runGithubE2E({
-        token: token!,
-        owner: process.env.CELIA_E2E_OWNER ?? 'elazamey',
-        repo: process.env.CELIA_E2E_REPO ?? 'chat.ai',
-        branch: `e2e/m2-${stamp}`,
-        readPath: 'README.md',
-        writePath: `docs/e2e/M2-${stamp}.md`,
-        fileContent: `# M2 E2E verification\n\nCreated by AOK LocalRunner + GitHub Adapter at ${new Date().toISOString()}.\n`,
-        commitMessage: 'M2 E2E verification',
-        prTitle: 'M2 E2E verification (auto)',
-        prBody: 'This PR was created programmatically by the AOK kernel to prove the real external boundary (M2).',
-        evidenceDir: reportDir,
-        runTests: () => runRepoTests(),
-      });
+      let outcome: Awaited<ReturnType<typeof runGithubE2E>>;
+      try {
+        outcome = await runGithubE2E({
+          token: token!,
+          owner: process.env.CELIA_E2E_OWNER ?? 'elazamey',
+          repo: process.env.CELIA_E2E_REPO ?? 'chat.ai',
+          branch: `e2e/m2-${stamp}`,
+          readPath: 'README.md',
+          writePath: `docs/e2e/M2-${stamp}.md`,
+          fileContent: `# M2 E2E verification\n\nCreated by AOK LocalRunner + GitHub Adapter at ${new Date().toISOString()}.\n`,
+          commitMessage: 'M2 E2E verification',
+          prTitle: 'M2 E2E verification (auto)',
+          prBody: 'This PR was created programmatically by the AOK kernel to prove the real external boundary (M2).',
+          evidenceDir: reportDir,
+          runTests: () => runRepoTests(),
+        });
+      } catch (error) {
+        writeReport(error instanceof GithubE2EError ? error.outcome : failureReport(error));
+        throw error;
+      }
       writeReport(outcome);
 
       // معيار القبول M2
