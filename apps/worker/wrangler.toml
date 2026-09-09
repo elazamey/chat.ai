@@ -5,3 +5,9 @@ compatibility_flags = ["nodejs_compat"]
 
 [vars]
 CELIA_MODE = "local"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "celia-runs"
+database_id = "deeb6d66-bfbc-4b74-ac58-ba1230258ab2"
+migrations_dir = "migrations"
