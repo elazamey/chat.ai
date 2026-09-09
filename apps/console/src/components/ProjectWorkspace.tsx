@@ -31,7 +31,7 @@ export function ProjectWorkspace({
   project: ProjectState;
   onSectionChange: (section: ProjectSection) => void;
 }) {
-  const section = SECTIONS.find((item) => item.id === project.section) ?? SECTIONS[0];
+  const section = SECTIONS.find((item) => item.id === project.section) ?? SECTIONS[0]!;
   const Icon = section.icon;
 
   return (

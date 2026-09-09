@@ -31,6 +31,8 @@ BLOCKED     ← ممنوع (GPL-copyleft قسري في نواة مغلقة ال�
 | @types/react | MIT | ALLOWED | أنواع React (dev، `apps/console`) |
 | @types/react-dom | MIT | ALLOWED | أنواع react-dom (dev، `apps/console`) |
 | @vitejs/plugin-react | MIT | ALLOWED | ملحق Vite لـ React (dev، `apps/console`) |
+| @cloudflare/workers-types | MIT | ALLOWED | أنواع Cloudflare Workers (dev، `apps/worker`) |
+| wrangler | MIT | ALLOWED | أداة نشر Cloudflare Workers/Pages (dev، `apps/worker`) |
 
 ## أدوات التشغيل (Tooling — ليست deps في الحزم)
 

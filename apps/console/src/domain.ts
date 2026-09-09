@@ -53,6 +53,14 @@ export interface ProjectState {
   section: ProjectSection;
 }
 
+/** Adapter boundary for a future backend event stream; no transport is assumed yet. */
+export type ExecutionEvent =
+  | { type: 'run.started'; runId: string; at: number }
+  | { type: 'run.completed'; runId: string; verdict: AgentRun['state']; at: number }
+  | { type: 'run.failed'; runId: string; error: string; at: number }
+  | { type: 'tool.called'; runId: string; tool: string; at: number }
+  | { type: 'evidence.created'; runId: string; count: number; at: number };
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
