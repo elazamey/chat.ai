@@ -100,6 +100,7 @@ export default function App() {
         taskId: outcome.task_id,
         verdict: outcome.verdict,
         evidenceCount: outcome.evidence.length,
+        evidence: outcome.evidence,
       } : current);
       setActivities((prev) => [
         ...prev,

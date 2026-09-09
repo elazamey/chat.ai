@@ -260,6 +260,18 @@ export function AgentWorkspace({ run, activities, agentState, plan }: AgentWorks
                 <div style={{ fontSize: 12, color: 'var(--text-faint)' }}>بانتظار أول حدث…</div>
               )}
             </div>
+            <div className="evidence-panel">
+              <div className="evidence-heading"><ShieldCheck size={14} color="var(--ok)" /><strong>الأدلة الفعلية</strong></div>
+              {run.evidence?.length ? (
+                <div className="evidence-list">
+                  {run.evidence.map((item, index) => (
+                    <pre key={index}>{JSON.stringify(item, null, 2)}</pre>
+                  ))}
+                </div>
+              ) : (
+                <div className="agent-panel-note">لا توجد عناصر evidence متاحة لهذا التشغيل.</div>
+              )}
+            </div>
           </div>
         </div>
       </div>

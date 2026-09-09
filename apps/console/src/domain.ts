@@ -37,6 +37,7 @@ export interface AgentRun {
   taskId?: string;
   verdict?: 'PASSED' | 'FAILED' | 'BLOCKED';
   evidenceCount?: number;
+  evidence?: unknown[];
 }
 
 export type AgentState = 'idle' | 'planning' | 'running' | 'waiting' | 'completed' | 'failed' | 'cancelled';

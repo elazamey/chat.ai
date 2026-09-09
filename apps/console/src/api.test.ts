@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { listRuns, listTasks, runTask, RunRequestError } from './api';
+import { getRun, listRuns, listTasks, runTask, RunRequestError } from './api';
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -84,6 +84,29 @@ describe('runTask', () => {
     await expect(listRuns('task-42')).rejects.toMatchObject({
       kind: 'api_rejected',
       message: 'query failed',
+    });
+  });
+
+  it('loads evidence details for a persisted run', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({
+        run_id: 'run-42',
+        task_id: 'task-42',
+        task: 'verify',
+        mode: 'local',
+        verdict: 'PASSED',
+        results: [],
+        verification: {},
+        usage: {},
+        evidence: [{ evidenceId: 'check-1', kind: 'local_smoke' }],
+        created_at: '2026-09-09T00:00:00.000Z',
+        completed_at: '2026-09-09T00:00:00.000Z',
+      }), { status: 200 }),
+    ));
+
+    await expect(getRun('run-42')).resolves.toMatchObject({
+      run_id: 'run-42',
+      evidence: [{ evidenceId: 'check-1', kind: 'local_smoke' }],
     });
   });
 });
