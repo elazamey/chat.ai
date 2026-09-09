@@ -16,7 +16,7 @@ export interface ApiTaskSummary {
   completed_at: string;
 }
 
-export type RunErrorKind = 'network' | 'invalid_response' | 'api_rejected';
+export type RunErrorKind = 'network' | 'invalid_response' | 'api_rejected' | 'infrastructure_unavailable';
 
 export class RunRequestError extends Error {
   constructor(
@@ -49,6 +49,9 @@ export async function runTask(task: string): Promise<ApiRunResponse> {
     throw new RunRequestError(`استجابة غير صالحة من خدمة التنفيذ (${response.status}).`, 'invalid_response');
   }
   if (!response.ok) {
+    if (response.status === 503) {
+      throw new RunRequestError('خدمة التنفيذ غير جاهزة مؤقتًا. حاول مرة أخرى لاحقًا.', 'infrastructure_unavailable');
+    }
     throw new RunRequestError('error' in body && body.error ? body.error : `فشل طلب التنفيذ (${response.status}).`, 'api_rejected');
   }
   if (!('verdict' in body) || !body.run_id || !body.task_id) {
@@ -72,6 +75,9 @@ export async function listTasks(limit = 25): Promise<ApiTaskSummary[]> {
     throw new RunRequestError(`استجابة غير صالحة من سجل المهام (${response.status}).`, 'invalid_response');
   }
   if (!response.ok) {
+    if (response.status === 503) {
+      throw new RunRequestError('سجل المهام غير جاهز مؤقتًا. حاول مرة أخرى لاحقًا.', 'infrastructure_unavailable');
+    }
     throw new RunRequestError(
       'error' in body && body.error ? body.error : `فشل طلب سجل المهام (${response.status}).`,
       'api_rejected',

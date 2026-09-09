@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { runTask, RunRequestError } from './api';
+import { listTasks, runTask, RunRequestError } from './api';
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -36,5 +36,27 @@ describe('runTask', () => {
         message: 'blocked by policy',
       } satisfies Partial<RunRequestError>),
     );
+  });
+
+  it('classifies a 503 execution response as infrastructure unavailable', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ error: 'D1 persistence is required for /run' }), { status: 503 }),
+    ));
+
+    await expect(runTask('test')).rejects.toMatchObject({
+      kind: 'infrastructure_unavailable',
+      message: 'خدمة التنفيذ غير جاهزة مؤقتًا. حاول مرة أخرى لاحقًا.',
+    });
+  });
+
+  it('classifies a 503 task-history response as infrastructure unavailable', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ error: 'D1 persistence is not configured' }), { status: 503 }),
+    ));
+
+    await expect(listTasks()).rejects.toMatchObject({
+      kind: 'infrastructure_unavailable',
+      message: 'سجل المهام غير جاهز مؤقتًا. حاول مرة أخرى لاحقًا.',
+    });
   });
 });
