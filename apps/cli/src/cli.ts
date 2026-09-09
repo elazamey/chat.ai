@@ -4,12 +4,12 @@
  * MVP: mode / run / ledger / tools / models — بدون أي تبعية خارجية.
  */
 import { ImmuneRuntime } from '@aok/immune';
-import { LocalRunner } from './local-runner';
+import { createLocalSmokeRunner, LocalRunner } from './local-runner';
 import { buildOwnershipProof } from './ownership-prove';
 
 async function main(): Promise<void> {
   const [command, ...args] = process.argv.slice(2);
-  const runner = new LocalRunner();
+  const runner = command === 'run' ? createLocalSmokeRunner() : new LocalRunner();
 
   switch (command) {
     case 'mode':
