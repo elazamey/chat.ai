@@ -49,7 +49,7 @@ describe('HTTP API', () => {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ task: 'free deployment smoke' }),
     });
-    const result = await response.json();
+    const result = (await response.json()) as { verdict?: string; run_id?: string };
     expect(response.status).toBe(200);
     expect(result.verdict).toBe('FAILED');
     expect(result.run_id).toEqual(expect.any(String));

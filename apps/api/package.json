@@ -10,7 +10,7 @@
     "build": "tsc --noEmit",
     "start": "tsx src/server.ts",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run --root ../.."
   },
   "dependencies": {
     "@aok/cli": "workspace:*"
