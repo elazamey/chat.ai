@@ -1,7 +1,9 @@
 import { createLocalSmokeRunner, type ProofCarryingOutcome } from '@aok/cli';
+import { getRun, listRuns, listTasks, pageSize, saveRun } from './storage';
 
 interface Env {
   CELIA_MODE?: string;
+  DB?: D1Database;
 }
 
 interface RunRequest {
@@ -25,10 +27,32 @@ export default {
     if (url.pathname === '/health') {
       if (request.method !== 'GET') return json({ error: 'method not allowed' }, 405, cors);
       return json(
-        { status: 'ok', service: 'celia-worker', mode: env.CELIA_MODE === 'cloud' ? 'cloud' : 'local' },
+        {
+          status: 'ok',
+          service: 'celia-worker',
+          mode: env.CELIA_MODE === 'cloud' ? 'cloud' : 'local',
+          persistence: env.DB ? 'd1' : 'unavailable',
+        },
         200,
         cors,
       );
+    }
+
+    if (request.method === 'GET' && url.pathname === '/runs') {
+      if (!env.DB) return json({ error: 'D1 persistence is not configured' }, 503, cors);
+      return json({ runs: await listRuns(env.DB, pageSize(url.searchParams.get('limit'))) }, 200, cors);
+    }
+
+    const runMatch = url.pathname.match(/^\/runs\/([^/]+)$/);
+    if (request.method === 'GET' && runMatch) {
+      if (!env.DB) return json({ error: 'D1 persistence is not configured' }, 503, cors);
+      const run = await getRun(env.DB, decodeURIComponent(runMatch[1]!));
+      return run ? json(run, 200, cors) : json({ error: 'run not found' }, 404, cors);
+    }
+
+    if (request.method === 'GET' && url.pathname === '/tasks') {
+      if (!env.DB) return json({ error: 'D1 persistence is not configured' }, 503, cors);
+      return json({ tasks: await listTasks(env.DB, pageSize(url.searchParams.get('limit'))) }, 200, cors);
     }
 
     if (url.pathname !== '/run') return json({ error: 'not found' }, 404, cors);
@@ -38,6 +62,7 @@ export default {
       const body = await readJson(request);
       const { task } = parseRunRequest(body);
       const outcome = await createLocalSmokeRunner(env.CELIA_MODE === 'cloud' ? 'cloud' : 'local').run(task);
+      if (env.DB) await saveRun(env.DB, outcome);
       return json(publicOutcome(outcome), 200, cors);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'request failed';
