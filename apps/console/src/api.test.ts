@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { listTasks, runTask, RunRequestError } from './api';
+import { listRuns, listTasks, runTask, RunRequestError } from './api';
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -58,5 +58,13 @@ describe('runTask', () => {
       kind: 'infrastructure_unavailable',
       message: 'سجل المهام غير جاهز مؤقتًا. حاول مرة أخرى لاحقًا.',
     });
+  });
+
+  it('requests runs with the task_id filter', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ runs: [] }), { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(listRuns('task-42', 10)).resolves.toEqual([]);
+    expect(fetchMock).toHaveBeenCalledWith('/runs?limit=10&task_id=task-42');
   });
 });

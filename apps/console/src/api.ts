@@ -16,6 +16,17 @@ export interface ApiTaskSummary {
   completed_at: string;
 }
 
+export interface ApiRunSummary {
+  run_id: string;
+  task_id: string;
+  task: string;
+  mode: string;
+  verdict: string;
+  evidence: unknown[];
+  created_at: string;
+  completed_at: string;
+}
+
 export type RunErrorKind = 'network' | 'invalid_response' | 'api_rejected' | 'infrastructure_unavailable';
 
 export class RunRequestError extends Error {
@@ -87,4 +98,34 @@ export async function listTasks(limit = 25): Promise<ApiTaskSummary[]> {
     throw new RunRequestError('استجابة سجل المهام ناقصة أو غير صالحة.', 'invalid_response');
   }
   return body.tasks;
+}
+
+export async function listRuns(taskId: string, limit = 25): Promise<ApiRunSummary[]> {
+  const query = new URLSearchParams({ limit: String(limit), task_id: taskId });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}/runs?${query.toString()}`);
+  } catch {
+    throw new RunRequestError('تعذر الوصول إلى سجل التشغيلات.', 'network');
+  }
+
+  let body: { runs?: ApiRunSummary[] } | { error?: string };
+  try {
+    body = (await response.json()) as { runs?: ApiRunSummary[] } | { error?: string };
+  } catch {
+    throw new RunRequestError(`استجابة غير صالحة من سجل التشغيلات (${response.status}).`, 'invalid_response');
+  }
+  if (!response.ok) {
+    if (response.status === 503) {
+      throw new RunRequestError('سجل التشغيلات غير جاهز مؤقتًا. حاول مرة أخرى لاحقًا.', 'infrastructure_unavailable');
+    }
+    throw new RunRequestError(
+      'error' in body && body.error ? body.error : `فشل طلب سجل التشغيلات (${response.status}).`,
+      'api_rejected',
+    );
+  }
+  if (!('runs' in body) || !Array.isArray(body.runs)) {
+    throw new RunRequestError('استجابة سجل التشغيلات ناقصة أو غير صالحة.', 'invalid_response');
+  }
+  return body.runs;
 }
