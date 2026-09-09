@@ -20,6 +20,11 @@ import { ProviderPanel } from './components/ProviderPanel';
 import { ApiKeys } from './components/ApiKeys';
 import { HomeDashboard } from './components/HomeDashboard';
 import { ProjectWorkspace } from './components/ProjectWorkspace';
+import {
+  createUnavailablePlan,
+  initialAgentState,
+  transitionAgentState,
+} from './agent-state';
 
 export type View =
   | 'home'
@@ -41,14 +46,8 @@ export default function App() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [routeNote, setRouteNote] = useState<string | null>(null);
   const [runsCount, setRunsCount] = useState(0);
-  const [agentState, setAgentState] = useState<AgentStateModel>({ state: 'idle' });
-  const [plan] = useState<AgentPlan>({
-    id: 'pending-backend-plan',
-    title: 'خطة التنفيذ',
-    state: 'unavailable',
-    steps: [],
-    note: 'دعم الخطة من backend غير متاح في عقد /run الحالي.',
-  });
+  const [agentState, setAgentState] = useState<AgentStateModel>(initialAgentState);
+  const [plan] = useState<AgentPlan>(createUnavailablePlan);
   const [project, setProject] = useState<ProjectState>({
     id: 'chat-ai',
     name: 'Celia',
@@ -70,7 +69,7 @@ export default function App() {
     setRouteNote(model ? `${model.providerId} · ${model.id}` : 'لا نموذج متاح');
     setView('workspace');
     setBusy(true);
-    setAgentState({ state: 'planning' });
+    setAgentState((current) => transitionAgentState(current, { type: 'planning' }));
     setActivities([]);
     setRunsCount((c) => c + 1);
     setRun({
@@ -85,12 +84,13 @@ export default function App() {
     setActivities([{ id: `a_${ulid()}`, kind: 'agent', text: 'بدأت Celia تحليل المهمة', time: nowTime() }]);
 
     try {
-      setAgentState({ state: 'running' });
+      setAgentState((current) => transitionAgentState(current, { type: 'run.started' }));
       const outcome = await runTask(clean);
-      setAgentState({
-        state: outcome.verdict === 'PASSED' ? 'completed' : 'failed',
+      setAgentState((current) => transitionAgentState(current, {
+        type: 'run.completed',
         runId: outcome.run_id,
-      });
+        verdict: outcome.verdict,
+      }));
       setRun((current) => current ? {
         ...current,
         state: outcome.verdict === 'PASSED' ? 'completed' : 'failed',
@@ -117,7 +117,7 @@ export default function App() {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'تعذر تنفيذ المهمة.';
       const errorKind = error instanceof RunRequestError ? error.kind : 'invalid_response';
-      setAgentState({ state: 'failed', error: message });
+      setAgentState((current) => transitionAgentState(current, { type: 'run.failed', error: message }));
       setRun((current) => current ? {
         ...current,
         state: 'failed',
