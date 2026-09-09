@@ -3,6 +3,7 @@ import {
   Bot,
   Boxes,
   FolderKanban,
+  Home,
   KeyRound,
   ListChecks,
   MessageSquare,
@@ -30,6 +31,7 @@ interface Item {
 }
 
 const SECTION_WORK: Item[] = [
+  { id: 'home', label: 'الرئيسية', icon: Home },
   { id: 'workspace', label: 'مساحة العمل', icon: Boxes },
   { id: 'tasks', label: 'المهام', icon: ListChecks },
   { id: 'projects', label: 'المشاريع', icon: FolderKanban },

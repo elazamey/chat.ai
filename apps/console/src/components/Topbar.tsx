@@ -8,6 +8,7 @@ export interface TopbarProps {
 }
 
 const TITLES: Record<View, string> = {
+  home: 'الرئيسية',
   workspace: 'مساحة العمل',
   chat: 'المحادثة',
   tasks: 'المهام',

@@ -10,8 +10,10 @@ import { Chat } from './components/Chat';
 import { AgentWorkspace } from './components/AgentWorkspace';
 import { ProviderPanel } from './components/ProviderPanel';
 import { ApiKeys } from './components/ApiKeys';
+import { HomeDashboard } from './components/HomeDashboard';
 
 export type View =
+  | 'home'
   | 'workspace'
   | 'chat'
   | 'tasks'
@@ -23,7 +25,7 @@ export type View =
   | 'settings';
 
 export default function App() {
-  const [view, setView] = useState<View>('workspace');
+  const [view, setView] = useState<View>('home');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [busy, setBusy] = useState(false);
   const [run, setRun] = useState<AgentRun | null>(null);
@@ -47,9 +49,31 @@ export default function App() {
     setBusy(true);
     setActivities([]);
     setRunsCount((c) => c + 1);
+    setRun({
+      id: `run_${ulid()}`,
+      project: 'elazamey/chat.ai',
+      goal: clean,
+      state: 'running',
+      nodes: [
+        { id: 'plan', label: 'تحليل الطلب وإنشاء الخطة', status: 'active' },
+        { id: 'execute', label: 'تنفيذ الأدوات المصرّح بها', tool: 'Policy → Executor', status: 'pending' },
+        { id: 'verify', label: 'التحقق وتجميع الأدلة', tool: 'VerificationEngine', status: 'pending' },
+      ],
+      files: [],
+    });
+    setActivities([{ id: `a_${ulid()}`, kind: 'agent', text: 'بدأت Celia تحليل المهمة', time: nowTime() }]);
 
     try {
       const outcome = await runTask(clean);
+      setRun((current) => current ? {
+        ...current,
+        state: outcome.verdict === 'PASSED' ? 'completed' : 'failed',
+        nodes: current.nodes.map((node, index) => ({ ...node, status: outcome.verdict === 'PASSED' || index === 0 ? 'done' : 'failed' })),
+      } : current);
+      setActivities((prev) => [
+        ...prev,
+        { id: `a_${ulid()}`, kind: 'tool', text: `اكتمل التنفيذ: ${outcome.verdict}`, detail: `${outcome.evidence.length} evidence items`, time: nowTime() },
+      ]);
       setMessages((prev) => [
         ...prev,
         {
@@ -88,6 +112,14 @@ export default function App() {
         <main style={{ flex: 1, minHeight: 0 }}>
           {view === 'workspace' && (
             <AgentWorkspace run={run} activities={activities} onApprove={approve} />
+          )}
+          {view === 'home' && (
+            <HomeDashboard
+              runs={runsCount}
+              onNewTask={() => setView('chat')}
+              onOpenTasks={() => setView('tasks')}
+              onOpenProjects={() => setView('projects')}
+            />
           )}
           {view === 'chat' && (
             <Chat
