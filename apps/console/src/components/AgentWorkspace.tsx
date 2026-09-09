@@ -5,7 +5,6 @@ import {
   FileCode2,
   FileText,
   Loader2,
-  Lock,
   Settings2,
   ShieldCheck,
   Wrench,
@@ -57,10 +56,9 @@ function FileIcon({ kind }: { kind: WorkspaceFile['kind'] }) {
 export interface AgentWorkspaceProps {
   run: AgentRun | null;
   activities: { id: string; kind: string; text: string; detail?: string; time: string }[];
-  onApprove: () => void;
 }
 
-export function AgentWorkspace({ run, activities, onApprove }: AgentWorkspaceProps) {
+export function AgentWorkspace({ run, activities }: AgentWorkspaceProps) {
   if (!run) {
     return (
       <div style={{ display: 'grid', placeItems: 'center', height: '100%', color: 'var(--text-faint)' }}>
@@ -118,7 +116,7 @@ export function AgentWorkspace({ run, activities, onApprove }: AgentWorkspacePro
           {/* steps */}
           <div style={{ background: 'var(--bg-elev)', padding: 14, borderLeft: '1px solid var(--border)' }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-dim)', marginBottom: 10 }}>
-              خطوات التنفيذ
+              ملخص التنفيذ
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               {run.nodes.map((n, i) => (
@@ -146,39 +144,9 @@ export function AgentWorkspace({ run, activities, onApprove }: AgentWorkspacePro
               ))}
             </div>
 
-            {run.state === 'needs_approval' && (
-              <div
-                style={{
-                  marginTop: 12,
-                  border: '1px solid var(--warn)',
-                  background: 'var(--warn-bg)',
-                  borderRadius: 10,
-                  padding: 10,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 8,
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5 }}>
-                  <Lock size={14} color="var(--warn)" />
-                  خطوة تتطلب موافقتك (كتابة ملفات)
-                </div>
-                <button
-                  onClick={onApprove}
-                  style={{
-                    border: 0,
-                    borderRadius: 8,
-                    background: 'var(--warn)',
-                    color: '#0a0c10',
-                    fontWeight: 700,
-                    fontSize: 12.5,
-                    padding: '7px 10px',
-                  }}
-                >
-                  موافقة وتنفيذ
-                </button>
-              </div>
-            )}
+            <div className="workspace-disclaimer">
+              الموافقات الفعلية غير متاحة في عقد الـAPI الحالي.
+            </div>
           </div>
 
           {/* files */}

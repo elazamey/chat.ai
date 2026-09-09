@@ -120,11 +120,6 @@ export default function App() {
     }
   }, [busy]);
 
-  const approve = useCallback(() => {
-    setRun((r) => (r ? { ...r, state: 'completed' } : r));
-    setBusy(false);
-  }, []);
-
   return (
     <div style={{ display: 'flex', height: '100vh' }}>
       <Sidebar view={view} setView={setView} runs={runsCount} />
@@ -132,7 +127,7 @@ export default function App() {
         <Topbar view={view} project="elazamey/chat.ai" />
         <main style={{ flex: 1, minHeight: 0 }}>
           {view === 'workspace' && (
-            <AgentWorkspace run={run} activities={activities} onApprove={approve} />
+            <AgentWorkspace run={run} activities={activities} />
           )}
           {view === 'home' && (
             <HomeDashboard
