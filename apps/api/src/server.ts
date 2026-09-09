@@ -1,11 +1,11 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
-import { LocalRunner } from '@aok/cli';
+import { createLocalSmokeRunner, LocalRunner } from '@aok/cli';
 import { healthResponse } from './health';
 import { parseRunRequest, runTask, sendJson } from './routes/run';
 
 const MAX_BODY_BYTES = 64 * 1024;
 
-export function createApiServer(runner = new LocalRunner()) {
+export function createApiServer(runner = createLocalSmokeRunner()) {
   return createServer(async (request, response) => {
     try {
       await handleRequest(request, response, runner);

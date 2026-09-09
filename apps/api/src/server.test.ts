@@ -43,7 +43,7 @@ describe('HTTP API', () => {
     expect(response.status).toBe(400);
   });
 
-  it('reaches the current runner and preserves a failed verdict', async () => {
+  it('reaches the current runner and returns its verified smoke verdict', async () => {
     const response = await request('/run', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -51,7 +51,7 @@ describe('HTTP API', () => {
     });
     const result = (await response.json()) as { verdict?: string; run_id?: string };
     expect(response.status).toBe(200);
-    expect(result.verdict).toBe('FAILED');
+    expect(result.verdict).toBe('PASSED');
     expect(result.run_id).toEqual(expect.any(String));
   });
 

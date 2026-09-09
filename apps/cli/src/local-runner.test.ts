@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { LocalRunner, FREE_BUDGET } from './local-runner';
+import { createLocalSmokeRunner, LocalRunner, FREE_BUDGET } from './local-runner';
 import type { CapabilityExecutor } from '@aok/execution';
 import { validateCapabilityName } from '@aok/contracts';
 import type { ApprovalPolicy } from '@aok/contracts';
@@ -38,6 +38,15 @@ function buildRunner(overrides: Partial<ConstructorParameters<typeof LocalRunner
 }
 
 describe('LocalRunner — vertical slice, local at $0', () => {
+  it('provides a bounded side-effect-free smoke runner', async () => {
+    const outcome = await createLocalSmokeRunner().run('deployment smoke');
+
+    expect(outcome.verdict).toBe('PASSED');
+    expect(outcome.results).toHaveLength(3);
+    expect(outcome.results.every((result) => result.status === 'success')).toBe(true);
+    expect(outcome.verification.evidence).toHaveLength(3);
+  });
+
   it('records metering events in the tamper-evident ledger', async () => {
     const runner = buildRunner();
     await runner.run('metered task');

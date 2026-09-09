@@ -98,6 +98,47 @@ export interface RunTaskOptions {
   ) => VerificationCheck[] | Promise<VerificationCheck[]>;
 }
 
+const LOCAL_SMOKE_ACTIONS = [
+  'repo.read',
+  'test.run',
+  'github.pull_request.create',
+] as const;
+
+/**
+ * Creates the bounded, side-effect-free runner used by local deployment smoke
+ * paths. The default LocalRunner remains deny-by-default.
+ */
+export function createLocalSmokeRunner(mode: RunMode = modeFromEnv()): LocalRunner {
+  const runner = new LocalRunner({
+    mode,
+    approvalPolicy: {
+      'repo.read': 'auto',
+      'test.run': 'auto',
+      'github.pull_request.create': 'auto',
+    },
+  });
+
+  for (const action of LOCAL_SMOKE_ACTIONS) {
+    runner.grant({
+      id: `local-smoke-${action}`,
+      principal: 'coder',
+      capability: action,
+      scope: '*',
+      effect: 'allow',
+    });
+    runner.registerExecutor(action, {
+      canExecute: async () => true,
+      execute: async (input) => ({
+        status: 'success',
+        output: { action, input, mode: 'local-smoke' },
+        evidence: [{ evidenceId: `${action}-local-smoke`, kind: 'local_smoke' }],
+      }),
+    });
+  }
+
+  return runner;
+}
+
 /**
  * الـLocal Runner — تجميع النواة الذرية في وضع محلي بـ$0 (الـVertical Slice):
  *

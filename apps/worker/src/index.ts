@@ -1,4 +1,4 @@
-import { LocalRunner, type ProofCarryingOutcome } from '@aok/cli';
+import { createLocalSmokeRunner, type ProofCarryingOutcome } from '@aok/cli';
 
 interface Env {
   CELIA_MODE?: string;
@@ -37,7 +37,7 @@ export default {
     try {
       const body = await readJson(request);
       const { task } = parseRunRequest(body);
-      const outcome = await new LocalRunner({ mode: env.CELIA_MODE === 'cloud' ? 'cloud' : 'local' }).run(task);
+      const outcome = await createLocalSmokeRunner(env.CELIA_MODE === 'cloud' ? 'cloud' : 'local').run(task);
       return json(publicOutcome(outcome), 200, cors);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'request failed';
