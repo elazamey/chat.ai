@@ -37,8 +37,8 @@ export function TasksPanel() {
           const value = taskId.trim();
           setError(null);
           setActiveTaskId(value);
+          setRuns(null);
           if (!value) {
-            setRuns(null);
             return;
           }
           void listRuns(value).then(setRuns).catch((reason: unknown) => {

@@ -67,4 +67,23 @@ describe('runTask', () => {
     await expect(listRuns('task-42', 10)).resolves.toEqual([]);
     expect(fetchMock).toHaveBeenCalledWith('/runs?limit=10&task_id=task-42');
   });
+
+  it('returns an empty filtered run list without inventing results', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ runs: [] }), { status: 200 }),
+    ));
+
+    await expect(listRuns('missing-task')).resolves.toEqual([]);
+  });
+
+  it('surfaces filtered run API errors', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ error: 'query failed' }), { status: 500 }),
+    ));
+
+    await expect(listRuns('task-42')).rejects.toMatchObject({
+      kind: 'api_rejected',
+      message: 'query failed',
+    });
+  });
 });
