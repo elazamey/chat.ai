@@ -11,15 +11,28 @@ export interface ApiRunResponse {
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/+$/, '');
 
 export async function runTask(task: string): Promise<ApiRunResponse> {
-  const response = await fetch(`${API_BASE_URL}/run`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ task }),
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}/run`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ task }),
+    });
+  } catch {
+    throw new Error('تعذر الوصول إلى خدمة التنفيذ. تحقق من الاتصال وحاول مرة أخرى.');
+  }
 
-  const body = (await response.json()) as ApiRunResponse | { error?: string };
+  let body: ApiRunResponse | { error?: string };
+  try {
+    body = (await response.json()) as ApiRunResponse | { error?: string };
+  } catch {
+    throw new Error(`استجابة غير صالحة من خدمة التنفيذ (${response.status}).`);
+  }
   if (!response.ok) {
-    throw new Error('error' in body && body.error ? body.error : `API request failed (${response.status})`);
+    throw new Error('error' in body && body.error ? body.error : `فشل طلب التنفيذ (${response.status}).`);
+  }
+  if (!('verdict' in body) || !body.run_id || !body.task_id) {
+    throw new Error('استجابة التنفيذ ناقصة أو غير صالحة.');
   }
   return body as ApiRunResponse;
 }

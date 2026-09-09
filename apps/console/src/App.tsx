@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { Bot, FolderKanban, ListChecks, Settings, TerminalSquare } from 'lucide-react';
-import type { Activity, ChatMessage, AgentRun } from './domain';
+import type { Activity, ChatMessage, AgentRun, ProjectSection, ProjectState } from './domain';
 import { guessType, ulid } from './mock';
 import { runTask } from './api';
 import { providerStatus, routeTask } from './kernel';
@@ -11,6 +11,7 @@ import { AgentWorkspace } from './components/AgentWorkspace';
 import { ProviderPanel } from './components/ProviderPanel';
 import { ApiKeys } from './components/ApiKeys';
 import { HomeDashboard } from './components/HomeDashboard';
+import { ProjectWorkspace } from './components/ProjectWorkspace';
 
 export type View =
   | 'home'
@@ -32,6 +33,12 @@ export default function App() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [routeNote, setRouteNote] = useState<string | null>(null);
   const [runsCount, setRunsCount] = useState(0);
+  const [project, setProject] = useState<ProjectState>({
+    id: 'chat-ai',
+    name: 'Celia',
+    repository: 'elazamey/chat.ai',
+    section: 'overview',
+  });
 
   const submitGoal = useCallback(async (goal: string) => {
     const clean = goal.trim();
@@ -85,12 +92,26 @@ export default function App() {
         },
       ]);
     } catch (error) {
+      const message = error instanceof Error ? error.message : 'تعذر تنفيذ المهمة.';
+      setRun((current) => current ? {
+        ...current,
+        state: 'failed',
+        error: message,
+        nodes: current.nodes.map((node, index) => ({
+          ...node,
+          status: index === 0 ? 'done' : 'failed',
+        })),
+      } : current);
+      setActivities((prev) => [
+        ...prev,
+        { id: `a_${ulid()}`, kind: 'system', text: 'فشل الاتصال بخدمة التنفيذ', detail: message, time: nowTime() },
+      ]);
       setMessages((prev) => [
         ...prev,
         {
           id: `m_${ulid()}`,
           role: 'assistant',
-          content: `تعذر تنفيذ المهمة عبر API: ${error instanceof Error ? error.message : 'unknown error'}`,
+          content: `تعذر تنفيذ المهمة عبر API: ${message}`,
           time: nowTime(),
         },
       ]);
@@ -121,6 +142,16 @@ export default function App() {
               onOpenProjects={() => setView('projects')}
             />
           )}
+          {view === 'projects' && (
+            <ProjectWorkspace
+              project={project}
+              onSectionChange={(section: ProjectSection) => {
+                setProject((current) => ({ ...current, section }));
+                if (section === 'chat') setView('chat');
+                if (section === 'agent') setView('workspace');
+              }}
+            />
+          )}
           {view === 'chat' && (
             <Chat
               messages={messages}
@@ -140,9 +171,6 @@ export default function App() {
           )}
           {view === 'agents' && (
             <Placeholder icon={<Bot size={26} />} title="الوكلاء" body="سجلّ الوكلاء المنشورة (AgentContract) وقدرات كل وكيل." />
-          )}
-          {view === 'projects' && (
-            <Placeholder icon={<FolderKanban size={26} />} title="المشاريع" body="مساحات مشاريع متعددة، كل واحدة بذاكرتها وسياساتها الخاصة." />
           )}
           {view === 'settings' && (
             <Placeholder icon={<Settings size={26} />} title="الإعدادات" body="تفضيلات النظام، السياسات، وبوابة المناعة (Immune Gate)." />

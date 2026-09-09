@@ -69,8 +69,8 @@ export function HomeDashboard({ runs, onNewTask, onOpenTasks, onOpenProjects }: 
 
       <section className="dashboard-grid">
         <DashboardCard icon={<ListChecks size={17} />} label="المهام النشطة" value={runs} tone="accent" />
-        <DashboardCard icon={<CheckCircle2 size={17} />} label="عمليات موثقة" value="—" tone="ok" />
-        <DashboardCard icon={<FileOutput size={17} />} label="Artifacts" value="0" tone="violet" />
+        <DashboardCard icon={<CheckCircle2 size={17} />} label="عمليات موثقة" value="غير متاح" tone="ok" />
+        <DashboardCard icon={<FileOutput size={17} />} label="Artifacts" value="غير متاح" tone="violet" />
       </section>
 
       <section className="dashboard-lower-grid">

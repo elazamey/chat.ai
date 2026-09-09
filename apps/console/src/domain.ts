@@ -32,6 +32,25 @@ export interface AgentRun {
   state: 'running' | 'needs_approval' | 'completed' | 'failed';
   nodes: AgentNode[];
   files: WorkspaceFile[];
+  error?: string;
+}
+
+export type ProjectSection =
+  | 'overview'
+  | 'chat'
+  | 'agent'
+  | 'tasks'
+  | 'files'
+  | 'knowledge'
+  | 'artifacts'
+  | 'activity'
+  | 'settings';
+
+export interface ProjectState {
+  id: string;
+  name: string;
+  repository: string;
+  section: ProjectSection;
 }
 
 export interface ChatMessage {
