@@ -1,0 +1,7 @@
+name = "celia-api"
+main = "src/index.ts"
+compatibility_date = "2026-09-09"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+CELIA_MODE = "local"
