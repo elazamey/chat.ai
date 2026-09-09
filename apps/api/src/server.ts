@@ -63,10 +63,3 @@ async function readJson(request: IncomingMessage): Promise<unknown> {
     throw new Error('request body must be valid JSON');
   }
 }
-
-const port = Number.parseInt(process.env.PORT ?? '10000', 10);
-if (process.argv[1]?.endsWith('apps/api/src/server.ts')) {
-  createApiServer().listen(port, '0.0.0.0', () => {
-    console.log(`celia-api listening on 0.0.0.0:${port}`);
-  });
-}

@@ -8,9 +8,9 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc --noEmit",
-    "start": "tsx src/server.ts",
+    "start": "tsx src/start.ts",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --root ../.."
+    "test": "vitest run --config vitest.config.ts"
   },
   "dependencies": {
     "@aok/cli": "workspace:*"
