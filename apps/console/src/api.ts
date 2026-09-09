@@ -8,6 +8,18 @@ export interface ApiRunResponse {
   evidence: unknown[];
 }
 
+export type RunErrorKind = 'network' | 'invalid_response' | 'api_rejected';
+
+export class RunRequestError extends Error {
+  constructor(
+    message: string,
+    readonly kind: RunErrorKind,
+  ) {
+    super(message);
+    this.name = 'RunRequestError';
+  }
+}
+
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/+$/, '');
 
 export async function runTask(task: string): Promise<ApiRunResponse> {
@@ -19,20 +31,20 @@ export async function runTask(task: string): Promise<ApiRunResponse> {
       body: JSON.stringify({ task }),
     });
   } catch {
-    throw new Error('تعذر الوصول إلى خدمة التنفيذ. تحقق من الاتصال وحاول مرة أخرى.');
+    throw new RunRequestError('تعذر الوصول إلى خدمة التنفيذ. تحقق من الاتصال وحاول مرة أخرى.', 'network');
   }
 
   let body: ApiRunResponse | { error?: string };
   try {
     body = (await response.json()) as ApiRunResponse | { error?: string };
   } catch {
-    throw new Error(`استجابة غير صالحة من خدمة التنفيذ (${response.status}).`);
+    throw new RunRequestError(`استجابة غير صالحة من خدمة التنفيذ (${response.status}).`, 'invalid_response');
   }
   if (!response.ok) {
-    throw new Error('error' in body && body.error ? body.error : `فشل طلب التنفيذ (${response.status}).`);
+    throw new RunRequestError('error' in body && body.error ? body.error : `فشل طلب التنفيذ (${response.status}).`, 'api_rejected');
   }
   if (!('verdict' in body) || !body.run_id || !body.task_id) {
-    throw new Error('استجابة التنفيذ ناقصة أو غير صالحة.');
+    throw new RunRequestError('استجابة التنفيذ ناقصة أو غير صالحة.', 'invalid_response');
   }
   return body as ApiRunResponse;
 }

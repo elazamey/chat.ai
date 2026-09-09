@@ -8,8 +8,9 @@ import {
   Settings2,
   ShieldCheck,
   Wrench,
+  Workflow,
 } from 'lucide-react';
-import type { AgentNode, AgentRun, WorkspaceFile } from '../domain';
+import type { AgentNode, AgentPlan, AgentRun, AgentStateModel, WorkspaceFile } from '../domain';
 import { Pill, type Tone } from './Pill';
 
 const FILE_ICON: Record<WorkspaceFile['kind'], typeof FileCode2> = {
@@ -56,9 +57,11 @@ function FileIcon({ kind }: { kind: WorkspaceFile['kind'] }) {
 export interface AgentWorkspaceProps {
   run: AgentRun | null;
   activities: { id: string; kind: string; text: string; detail?: string; time: string }[];
+  agentState: AgentStateModel;
+  plan: AgentPlan;
 }
 
-export function AgentWorkspace({ run, activities }: AgentWorkspaceProps) {
+export function AgentWorkspace({ run, activities, agentState, plan }: AgentWorkspaceProps) {
   if (!run) {
     return (
       <div style={{ display: 'grid', placeItems: 'center', height: '100%', color: 'var(--text-faint)' }}>
@@ -112,6 +115,18 @@ export function AgentWorkspace({ run, activities }: AgentWorkspaceProps) {
           <Pill tone={badge.tone}>{badge.label}</Pill>
         </div>
 
+        <div className="agent-plan-panel">
+          <div className="agent-panel-heading">
+            <div><Workflow size={15} color="var(--accent)" /><strong>PLAN</strong></div>
+            <Pill tone="neutral">{plan.state === 'available' ? 'متاح' : 'غير متاح'}</Pill>
+          </div>
+          {plan.steps.length > 0 ? (
+            <div className="plan-steps">{plan.steps.map((step) => <div key={step.id}>{step.title}</div>)}</div>
+          ) : (
+            <div className="agent-panel-note">{plan.note}</div>
+          )}
+        </div>
+
         <div style={{ display: 'grid', gridTemplateColumns: 'minmax(240px, 340px) 1fr 1fr', minHeight: 360 }}>
           {/* steps */}
           <div style={{ background: 'var(--bg-elev)', padding: 14, borderLeft: '1px solid var(--border)' }}>
@@ -119,7 +134,7 @@ export function AgentWorkspace({ run, activities }: AgentWorkspaceProps) {
               ملخص التنفيذ
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {run.nodes.map((n, i) => (
+              {run.nodes.length > 0 ? run.nodes.map((n, i) => (
                 <div key={n.id} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 6px' }}>
                   <NodeIcon status={n.status} />
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -141,7 +156,9 @@ export function AgentWorkspace({ run, activities }: AgentWorkspaceProps) {
                     <span style={{ color: 'var(--text-faint)', fontSize: 10 }}>↓</span>
                   )}
                 </div>
-              ))}
+              )) : (
+                <div className="agent-panel-note">مراحل التنفيذ التفصيلية غير متاحة من backend؛ المعروض أدناه هو ملخص النتيجة الفعلية.</div>
+              )}
             </div>
 
             <div className="workspace-disclaimer">
@@ -155,7 +172,7 @@ export function AgentWorkspace({ run, activities }: AgentWorkspaceProps) {
               الملفات
             </div>
             {run.files.length === 0 ? (
-              <div style={{ fontSize: 12, color: 'var(--text-faint)' }}>لم تُنشأ ملفات بعد…</div>
+              <div style={{ fontSize: 12, color: 'var(--text-faint)' }}>بيانات الملفات غير متاحة من عقد التنفيذ الحالي.</div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {run.files.map((f) => (
@@ -206,6 +223,12 @@ export function AgentWorkspace({ run, activities }: AgentWorkspaceProps) {
               سجل النشاط
             </div>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <div className="execution-facts">
+                <div><span>Agent state</span><strong>{agentState.state}</strong></div>
+                <div><span>run_id</span><strong>{run.backendRunId ?? 'غير متاح'}</strong></div>
+                <div><span>verdict</span><strong>{run.verdict ?? 'قيد الانتظار'}</strong></div>
+                <div><span>evidence</span><strong>{run.evidenceCount ?? 'غير متاح'}</strong></div>
+              </div>
               {activities.map((a, i) => (
                 <div key={a.id} style={{ display: 'flex', gap: 10 }}>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>

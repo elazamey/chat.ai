@@ -33,6 +33,35 @@ export interface AgentRun {
   nodes: AgentNode[];
   files: WorkspaceFile[];
   error?: string;
+  backendRunId?: string;
+  taskId?: string;
+  verdict?: 'PASSED' | 'FAILED' | 'BLOCKED';
+  evidenceCount?: number;
+}
+
+export type AgentState = 'idle' | 'planning' | 'running' | 'waiting' | 'completed' | 'failed' | 'cancelled';
+export type PlanStepStatus = 'pending' | 'running' | 'completed' | 'failed' | 'skipped';
+export type PlanState = 'unavailable' | 'available';
+
+export interface PlanStep {
+  id: string;
+  title: string;
+  description?: string;
+  status: PlanStepStatus;
+}
+
+export interface AgentPlan {
+  id: string;
+  title: string;
+  state: PlanState;
+  steps: PlanStep[];
+  note?: string;
+}
+
+export interface AgentStateModel {
+  state: AgentState;
+  runId?: string;
+  error?: string;
 }
 
 export type ProjectSection =

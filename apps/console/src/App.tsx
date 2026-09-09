@@ -1,8 +1,16 @@
 import { useCallback, useState } from 'react';
 import { Bot, FolderKanban, ListChecks, Settings, TerminalSquare } from 'lucide-react';
-import type { Activity, ChatMessage, AgentRun, ProjectSection, ProjectState } from './domain';
+import type {
+  Activity,
+  AgentPlan,
+  AgentRun,
+  AgentStateModel,
+  ChatMessage,
+  ProjectSection,
+  ProjectState,
+} from './domain';
 import { guessType, ulid } from './mock';
-import { runTask } from './api';
+import { runTask, RunRequestError } from './api';
 import { providerStatus, routeTask } from './kernel';
 import { Sidebar } from './components/Sidebar';
 import { Topbar } from './components/Topbar';
@@ -33,6 +41,14 @@ export default function App() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [routeNote, setRouteNote] = useState<string | null>(null);
   const [runsCount, setRunsCount] = useState(0);
+  const [agentState, setAgentState] = useState<AgentStateModel>({ state: 'idle' });
+  const [plan] = useState<AgentPlan>({
+    id: 'pending-backend-plan',
+    title: 'خطة التنفيذ',
+    state: 'unavailable',
+    steps: [],
+    note: 'دعم الخطة من backend غير متاح في عقد /run الحالي.',
+  });
   const [project, setProject] = useState<ProjectState>({
     id: 'chat-ai',
     name: 'Celia',
@@ -54,6 +70,7 @@ export default function App() {
     setRouteNote(model ? `${model.providerId} · ${model.id}` : 'لا نموذج متاح');
     setView('workspace');
     setBusy(true);
+    setAgentState({ state: 'planning' });
     setActivities([]);
     setRunsCount((c) => c + 1);
     setRun({
@@ -62,20 +79,26 @@ export default function App() {
       goal: clean,
       state: 'running',
       nodes: [
-        { id: 'plan', label: 'تحليل الطلب وإنشاء الخطة', status: 'active' },
-        { id: 'execute', label: 'تنفيذ الأدوات المصرّح بها', tool: 'Policy → Executor', status: 'pending' },
-        { id: 'verify', label: 'التحقق وتجميع الأدلة', tool: 'VerificationEngine', status: 'pending' },
       ],
       files: [],
     });
     setActivities([{ id: `a_${ulid()}`, kind: 'agent', text: 'بدأت Celia تحليل المهمة', time: nowTime() }]);
 
     try {
+      setAgentState({ state: 'running' });
       const outcome = await runTask(clean);
+      setAgentState({
+        state: outcome.verdict === 'PASSED' ? 'completed' : 'failed',
+        runId: outcome.run_id,
+      });
       setRun((current) => current ? {
         ...current,
         state: outcome.verdict === 'PASSED' ? 'completed' : 'failed',
-        nodes: current.nodes.map((node, index) => ({ ...node, status: outcome.verdict === 'PASSED' || index === 0 ? 'done' : 'failed' })),
+        nodes: [],
+        backendRunId: outcome.run_id,
+        taskId: outcome.task_id,
+        verdict: outcome.verdict,
+        evidenceCount: outcome.evidence.length,
       } : current);
       setActivities((prev) => [
         ...prev,
@@ -93,18 +116,17 @@ export default function App() {
       ]);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'تعذر تنفيذ المهمة.';
+      const errorKind = error instanceof RunRequestError ? error.kind : 'invalid_response';
+      setAgentState({ state: 'failed', error: message });
       setRun((current) => current ? {
         ...current,
         state: 'failed',
         error: message,
-        nodes: current.nodes.map((node, index) => ({
-          ...node,
-          status: index === 0 ? 'done' : 'failed',
-        })),
+        nodes: [],
       } : current);
       setActivities((prev) => [
         ...prev,
-        { id: `a_${ulid()}`, kind: 'system', text: 'فشل الاتصال بخدمة التنفيذ', detail: message, time: nowTime() },
+        { id: `a_${ulid()}`, kind: 'system', text: `فشل الطلب (${errorKind})`, detail: message, time: nowTime() },
       ]);
       setMessages((prev) => [
         ...prev,
@@ -127,7 +149,7 @@ export default function App() {
         <Topbar view={view} project="elazamey/chat.ai" />
         <main style={{ flex: 1, minHeight: 0 }}>
           {view === 'workspace' && (
-            <AgentWorkspace run={run} activities={activities} />
+            <AgentWorkspace run={run} activities={activities} agentState={agentState} plan={plan} />
           )}
           {view === 'home' && (
             <HomeDashboard
