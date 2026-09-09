@@ -55,13 +55,28 @@ export async function getRun(db: D1Database, runId: string): Promise<RunRecord |
 }
 
 export async function listRuns(db: D1Database, limit: number): Promise<RunRecord[]> {
-  const result = await db.prepare(`
+  return listRunsByTask(db, limit);
+}
+
+export async function listRunsByTask(db: D1Database, limit: number, taskId?: string): Promise<RunRecord[]> {
+  const query = taskId ? `
+    SELECT run_id, task_id, task, mode, verdict, results_json,
+      verification_json, usage_json, evidence_json, created_at, completed_at
+    FROM runs
+    WHERE task_id = ?
+    ORDER BY created_at DESC
+    LIMIT ?
+  ` : `
     SELECT run_id, task_id, task, mode, verdict, results_json,
       verification_json, usage_json, evidence_json, created_at, completed_at
     FROM runs
     ORDER BY created_at DESC
     LIMIT ?
-  `).bind(limit).all<Record<string, string>>();
+  `;
+  const statement = db.prepare(query);
+  const result = taskId
+    ? await statement.bind(taskId, limit).all<Record<string, string>>()
+    : await statement.bind(limit).all<Record<string, string>>();
   return result.results.map(deserialize);
 }
 
