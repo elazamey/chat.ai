@@ -13,7 +13,7 @@ COPY storage ./storage
 COPY tests ./tests
 RUN pnpm install --frozen-lockfile
 
-# Stage 2: Run the local-first CLI as a non-root user
+# Stage 2: Run the HTTP API as a non-root user
 FROM node:22-alpine AS runner
 WORKDIR /app
 ENV CELIA_MODE=local
@@ -30,5 +30,4 @@ COPY --chown=node:node --from=builder /app/storage ./storage
 COPY --chown=node:node --from=builder /app/tests ./tests
 
 USER node
-ENTRYPOINT ["pnpm", "exec", "tsx", "apps/cli/src/cli.ts"]
-CMD ["health"]
+CMD ["pnpm", "exec", "tsx", "apps/api/src/start.ts"]
