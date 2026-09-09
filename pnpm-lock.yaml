@@ -33,6 +33,12 @@ importers:
         specifier: workspace:*
         version: link:../../kernel/contracts
 
+  apps/api:
+    dependencies:
+      '@aok/cli':
+        specifier: workspace:*
+        version: link:../cli
+
   apps/cli:
     dependencies:
       '@aok/billing':

@@ -1,7 +1,8 @@
 import { useCallback, useState } from 'react';
 import { Bot, FolderKanban, ListChecks, Settings, TerminalSquare } from 'lucide-react';
 import type { Activity, ChatMessage, AgentRun } from './domain';
-import { guessType, startDemo, ulid } from './mock';
+import { guessType, ulid } from './mock';
+import { runTask } from './api';
 import { providerStatus, routeTask } from './kernel';
 import { Sidebar } from './components/Sidebar';
 import { Topbar } from './components/Topbar';
@@ -30,7 +31,7 @@ export default function App() {
   const [routeNote, setRouteNote] = useState<string | null>(null);
   const [runsCount, setRunsCount] = useState(0);
 
-  const submitGoal = useCallback((goal: string) => {
+  const submitGoal = useCallback(async (goal: string) => {
     const clean = goal.trim();
     if (!clean || busy) return;
 
@@ -47,19 +48,31 @@ export default function App() {
     setActivities([]);
     setRunsCount((c) => c + 1);
 
-    startDemo(clean, (partial) => {
-      if (partial.run) setRun(partial.run);
-      if (partial.activities) setActivities(partial.activities);
-      if (partial.chat) {
-        if (partial.chat.content !== '…') {
-          setMessages((prev) =>
-            prev.some((m) => m.id === partial.chat!.id) ? prev : [...prev, partial.chat!],
-          );
-        }
-        if (partial.run?.state === 'completed' || partial.chat.content !== '…') setBusy(false);
-      }
-      if (partial.run?.state === 'completed') setBusy(false);
-    });
+    try {
+      const outcome = await runTask(clean);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `m_${ulid()}`,
+          role: 'assistant',
+          content: `اكتمل التنفيذ عبر API: ${outcome.verdict}`,
+          time: nowTime(),
+          meta: `${outcome.mode} · run ${outcome.run_id}`,
+        },
+      ]);
+    } catch (error) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `m_${ulid()}`,
+          role: 'assistant',
+          content: `تعذر تنفيذ المهمة عبر API: ${error instanceof Error ? error.message : 'unknown error'}`,
+          time: nowTime(),
+        },
+      ]);
+    } finally {
+      setBusy(false);
+    }
   }, [busy]);
 
   const approve = useCallback(() => {
