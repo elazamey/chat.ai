@@ -54,7 +54,7 @@ describe('agent state model', () => {
 });
 
 describe('plan state model', () => {
-  it('transitions a plan step without creating runtime evidence', () => {
+  it('transitions a plan step through every supported status without creating runtime evidence', () => {
     const step = {
       id: 'step-1',
       title: 'Validate',
@@ -63,6 +63,8 @@ describe('plan state model', () => {
 
     expect(transitionPlanStep(step, 'running')).toEqual({ ...step, status: 'running' });
     expect(transitionPlanStep(step, 'completed')).toEqual({ ...step, status: 'completed' });
+    expect(transitionPlanStep(step, 'failed')).toEqual({ ...step, status: 'failed' });
+    expect(transitionPlanStep(step, 'skipped')).toEqual({ ...step, status: 'skipped' });
   });
 
   it('keeps the planner explicitly unavailable when /run has no plan contract', () => {
