@@ -13,10 +13,11 @@ const MAX_BODY_BYTES = 64 * 1024;
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+    const origin = request.headers.get('origin');
     const cors = {
       'access-control-allow-headers': 'content-type',
       'access-control-allow-methods': 'GET, POST, OPTIONS',
-      'access-control-allow-origin': '*',
+      'access-control-allow-origin': allowedOrigin(origin),
     };
 
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
@@ -80,4 +81,13 @@ function json(value: unknown, status: number, headers: HeadersInit = {}): Respon
     status,
     headers: { ...headers, 'content-type': 'application/json; charset=utf-8' },
   });
+}
+
+function allowedOrigin(origin: string | null): string {
+  const allowed = new Set([
+    'https://celia-console.pages.dev',
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+  ]);
+  return origin && allowed.has(origin) ? origin : 'https://celia-console.pages.dev';
 }
