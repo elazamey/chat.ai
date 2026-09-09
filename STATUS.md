@@ -17,4 +17,12 @@ All other CeliaOS tracks, including `celiaos_2026`, `celia-proh`, and `CELA.PRO`
 
 M3 (Agent + Planner contracts and truthful UI boundaries) is complete for the currently supported backend contract. The frontend does not claim backend plan, cancellation, approval, SSE, or WebSocket capabilities that do not exist.
 
-M4 must extend `celia-console` and focus on real execution/task capabilities before adding new Files, Knowledge, Marketplace, or other presentation-only surfaces.
+M4 Execution/Tasks is complete for the current scope:
+
+- D1 persistence for completed runs
+- bounded polling endpoints: `/runs`, `/runs/:id`, and `/tasks`
+- indexed `task_id` filtering
+- real Tasks UI consumption with explicit empty/error/infrastructure states
+- no change to the `/run` contract
+
+Pagination for larger histories, event streaming, cancellation, and new Files, Knowledge, Marketplace, or other presentation-only surfaces are future milestones, not part of the M4 closure.
