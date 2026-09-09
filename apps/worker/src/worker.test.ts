@@ -10,12 +10,15 @@ type Statement = {
   run: () => Promise<unknown>;
 };
 
-function fakeDatabase(rows: Record<string, string>[] = []): D1Database {
+function fakeDatabase(rows: Record<string, string>[] = [], writes: { count: number } = { count: 0 }): D1Database {
   const statement: Statement = {
     bind: () => statement,
     all: async <T>() => ({ results: rows as T[] }),
     first: async <T>() => (rows[0] as T | undefined) ?? null,
-    run: async () => ({ success: true }),
+    run: async () => {
+      writes.count += 1;
+      return { success: true };
+    },
   };
   return { prepare: () => statement } as unknown as D1Database;
 }
@@ -31,7 +34,6 @@ describe('worker persistence boundary', () => {
     const response = await worker.fetch(
       request('/run', { method: 'POST', body: JSON.stringify({ task: 'test' }) }),
       { CELIA_MODE: 'local' },
-      {} as ExecutionContext,
     );
 
     expect(response.status).toBe(503);
@@ -56,9 +58,20 @@ describe('worker persistence boundary', () => {
     }]);
     const env = { CELIA_MODE: 'local', DB: db };
 
-    expect((await worker.fetch(request('/runs?limit=1&task_id=task-1'), env, {} as ExecutionContext)).status).toBe(200);
-    expect((await worker.fetch(request('/runs/run-1'), env, {} as ExecutionContext)).status).toBe(200);
-    expect((await worker.fetch(request('/tasks?limit=1'), env, {} as ExecutionContext)).status).toBe(200);
+    expect((await worker.fetch(request('/runs?limit=1&task_id=task-1'), env)).status).toBe(200);
+    expect((await worker.fetch(request('/runs/run-1'), env)).status).toBe(200);
+    expect((await worker.fetch(request('/tasks?limit=1'), env)).status).toBe(200);
+  });
+
+  it('persists a successful /run before returning the response', async () => {
+    const writes = { count: 0 };
+    const response = await worker.fetch(
+      request('/run', { method: 'POST', body: JSON.stringify({ task: 'persist this run' }) }),
+      { CELIA_MODE: 'local', DB: fakeDatabase([], writes) },
+    );
+
+    expect(response.status).toBe(200);
+    expect(writes.count).toBe(1);
   });
 });
 
