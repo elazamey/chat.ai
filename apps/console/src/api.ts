@@ -8,6 +8,14 @@ export interface ApiRunResponse {
   evidence: unknown[];
 }
 
+export interface ApiTaskSummary {
+  task_id: string;
+  task: string;
+  verdict: string;
+  created_at: string;
+  completed_at: string;
+}
+
 export type RunErrorKind = 'network' | 'invalid_response' | 'api_rejected';
 
 export class RunRequestError extends Error {
@@ -20,7 +28,7 @@ export class RunRequestError extends Error {
   }
 }
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/+$/, '');
+export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/+$/, '');
 
 export async function runTask(task: string): Promise<ApiRunResponse> {
   let response: Response;
@@ -47,4 +55,30 @@ export async function runTask(task: string): Promise<ApiRunResponse> {
     throw new RunRequestError('استجابة التنفيذ ناقصة أو غير صالحة.', 'invalid_response');
   }
   return body as ApiRunResponse;
+}
+
+export async function listTasks(limit = 25): Promise<ApiTaskSummary[]> {
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}/tasks?limit=${encodeURIComponent(String(limit))}`);
+  } catch {
+    throw new RunRequestError('تعذر الوصول إلى سجل المهام.', 'network');
+  }
+
+  let body: { tasks?: ApiTaskSummary[] } | { error?: string };
+  try {
+    body = (await response.json()) as { tasks?: ApiTaskSummary[] } | { error?: string };
+  } catch {
+    throw new RunRequestError(`استجابة غير صالحة من سجل المهام (${response.status}).`, 'invalid_response');
+  }
+  if (!response.ok) {
+    throw new RunRequestError(
+      'error' in body && body.error ? body.error : `فشل طلب سجل المهام (${response.status}).`,
+      'api_rejected',
+    );
+  }
+  if (!('tasks' in body) || !Array.isArray(body.tasks)) {
+    throw new RunRequestError('استجابة سجل المهام ناقصة أو غير صالحة.', 'invalid_response');
+  }
+  return body.tasks;
 }

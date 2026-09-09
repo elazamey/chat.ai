@@ -20,6 +20,7 @@ import { ProviderPanel } from './components/ProviderPanel';
 import { ApiKeys } from './components/ApiKeys';
 import { HomeDashboard } from './components/HomeDashboard';
 import { ProjectWorkspace } from './components/ProjectWorkspace';
+import { TasksPanel } from './components/TasksPanel';
 import {
   createUnavailablePlan,
   initialAgentState,
@@ -181,7 +182,7 @@ export default function App() {
           {view === 'providers' && <ProviderPanel providers={providerStatus()} />}
           {view === 'keys' && <ApiKeys />}
           {view === 'tasks' && (
-            <Placeholder icon={<ListChecks size={26} />} title="المهام" body="قائمة المهام المنفّذة (Task → Run → Node → Job) قادمة من @aok/orchestrator." />
+            <TasksPanel />
           )}
           {view === 'files' && (
             <Placeholder icon={<TerminalSquare size={26} />} title="الملفات" body="مستكشف ملفات مساحة العمل + الـDiff المرئي لأي تعديل أنجزه وكيل." />
