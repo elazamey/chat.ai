@@ -1,23 +1,30 @@
 import { execSync } from 'node:child_process';
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { systemActor, type ApprovalPolicy, type Result, type VerificationCheck } from '@aok/contracts';
-import { LocalRunner } from './local-runner';
-import { GitHubPlugin, HttpGitHubTransport, GITHUB_ACTIONS } from '@aok/github';
+import { systemActor, type Result, type VerificationCheck } from '@aok/contracts';
+import type { ApprovalRequest } from './local-runner';
+import { createGithubRunner } from './github-runner';
+import { HttpGitHubTransport, type GitHubTransport } from '@aok/github';
 
-/** سياسة موافقة واقعية لـM2: كل القراءات auto، الإنشاء/الكتابة/commit auto (per-run)، PR → approval. */
-export const GITHUB_APPROVAL_POLICY: ApprovalPolicy = {
-  'github.repo.read': 'auto',
-  'github.repo.branch.create': 'auto',
-  'github.repo.file.read': 'auto',
-  'github.repo.file.write': 'auto',
-  'github.git.commit': 'auto',
-  'github.pull_request.create': 'approval',
-  'github.pull_request.read': 'auto',
-};
+/**
+ * سياسة موافقة GitHub المشدّدة (قراءات auto افتراضيًا؛ استشارة موافقة إجبارية
+ * لكل كتابة مع قفل ضد تخفيفها بـapprovalPolicy). تُعرَّف مركزيًا في
+ * github-policy.ts وتُعاد إصدارها هنا توافقًا مع المستوردين القدامى.
+ */
+export { GITHUB_APPROVAL_POLICY } from './github-policy';
 
 export interface GithubE2EConfig {
-  token: string;
+  /** رمز GitHub — إلزامي ما لم يُقدَّم `transport` جاهز (كما في الاختبارات الوهمية). */
+  token?: string;
+  /** Transport بديل مُهيأ مسبقًا (حقن للاختبار دون كشف أي سر). له الأولوية على token. */
+  transport?: GitHubTransport;
+  /**
+   * معالج يُستشار منفردًا قبل كل عملية كتابة (فرع/ملف/commit/PR)،
+   * ويعيد قرار القبول أو الرفض لتلك العملية بعينها. بدونه تُرفض الكتابات كلها
+   * وتفشل الـE2E بأمان. كون قرار المعالج صادرًا عن تفاعل بشري فوري أو موافقة
+   * مسبقة موثقة أو سياسة خارجية هو اختيار المتصل؛ لا يوجد افتراض مضمن هنا.
+   */
+  onApprovalRequired?: (req: ApprovalRequest) => Promise<boolean> | boolean;
   owner: string;
   repo: string;
   branch: string;
@@ -79,16 +86,14 @@ export async function runGithubE2E(cfg: GithubE2EConfig): Promise<GithubE2EOutco
   const branch = cfg.branch;
   const base = cfg.base ?? 'main';
 
-  const runner = new LocalRunner({
-    approvalPolicy: GITHUB_APPROVAL_POLICY,
-    onApprovalRequired: async () => true, // HITL: موافقة آلية للعرض
-  });
-  for (const a of GITHUB_ACTIONS) {
-    runner.grant({ id: `g-${a}`, principal: 'coder', capability: a, scope: '*', effect: 'allow' });
+  if (!cfg.transport && !cfg.token) {
+    throw new Error('runGithubE2E requires cfg.token or cfg.transport');
   }
-
-  const plugin = new GitHubPlugin(new HttpGitHubTransport('https://api.github.com', cfg.token));
-  plugin.register(runner.executors);
+  const transport = cfg.transport ?? new HttpGitHubTransport('https://api.github.com', cfg.token!);
+  // الربط عبر مسار التنفيذ الرسمي (تسجيل + منح + قفل سياسة الكتابة):
+  // الـRunner يستدعي onApprovalRequired للمتصل مرة قبل كل كتابة،
+  // بينما مصدر قرار ذلك المعالج يحدده المتصل نفسه.
+  const runner = createGithubRunner({ transport, onApprovalRequired: cfg.onApprovalRequired });
 
   const intent = `افحص المستودع ${owner}/${repo} وأنشئ PR يضيف ${cfg.writePath}`;
 

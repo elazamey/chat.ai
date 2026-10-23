@@ -6,6 +6,20 @@
 import { ImmuneRuntime } from '@aok/immune';
 import { createLocalSmokeRunner, LocalRunner } from './local-runner';
 import { buildOwnershipProof } from './ownership-prove';
+import { createGithubRunnerFromEnv } from './github-runner';
+import {
+  assertInteractiveTerminalForGithubWrites,
+  buildGithubRunPlan,
+  createStdinInteractiveApproval,
+  hasGithubWriteSteps,
+  summarizeGithubOutput,
+} from './github-run';
+import {
+  formatConnectionReport,
+  githubTransportFromEnv,
+  parseOwnerRepo,
+  verifyGithubConnection,
+} from './github-connect';
 
 async function main(): Promise<void> {
   const [command, ...args] = process.argv.slice(2);
@@ -43,17 +57,66 @@ async function main(): Promise<void> {
       console.log(runner.router.discover().map((m) => `${m.providerId}/${m.id} ($${m.costPer1kInputUsd}/1k)`).join('\n'));
       return;
 
-    case 'tools':
-      console.log(runner.executors.list().join('\n') || '(no executors registered)');
+    case 'tools': {
+      // عند وجود اعتماد GitHub تظهر الأدوات الحقيقية المسجّلة في مسار التنفيذ، وإلا إرشاد للاتصال.
+      const githubRunner = createGithubRunnerFromEnv();
+      const tools = githubRunner ? githubRunner.executors.list() : runner.executors.list();
+      console.log(tools.join('\n') || '(no executors registered)');
+      if (!githubRunner) console.log('(github: not connected — set GH_TOKEN, then: celia runner connect)');
       return;
+    }
 
     case 'run': {
-      const intent = args.join(' ') || 'demo task';
-      const outcome = await runner.run(intent);
-      console.log(`verdict: ${outcome.verdict}`);
-      console.log(`usage: ${JSON.stringify(outcome.usage.total)}`);
-      console.log(`evidence: ${outcome.verification.evidence.length} item(s)`);
-      return;
+      // المسار الافتراضي يبقى Smoke المحلي العديم الأثر تمامًا كما كان؛
+      // لا يفعّل GitHub الحقيقي إلا العلم الصريح --github.
+      if (!args.includes('--github')) {
+        const intent = args.join(' ') || 'demo task';
+        const outcome = await runner.run(intent);
+        console.log(`verdict: ${outcome.verdict}`);
+        console.log(`usage: ${JSON.stringify(outcome.usage.total)}`);
+        console.log(`evidence: ${outcome.verification.evidence.length} item(s)`);
+        return;
+      }
+
+      let approvalSession: ReturnType<typeof createStdinInteractiveApproval> | undefined;
+      try {
+        const plan = buildGithubRunPlan(args);
+        // فحص TTY عند هذا الحد فقط، قبل إنشاء معالج الموافقة أو Runner أو أي Transport.
+        assertInteractiveTerminalForGithubWrites(plan.steps, process.stdin.isTTY === true);
+        // جلسة تفاعلية فقط عند وجود كتابة مخططة؛ كل كتابة تُعرض وتُسأل عنها منفردة.
+        approvalSession = hasGithubWriteSteps(plan.steps)
+          ? createStdinInteractiveApproval()
+          : undefined;
+        const githubRunner = createGithubRunnerFromEnv(process.env, {
+          onApprovalRequired: approvalSession?.onApprovalRequired,
+        });
+        if (!githubRunner) {
+          console.log('github: NOT CONNECTED — no credential found');
+          console.log('set GH_TOKEN (or GITHUB_TOKEN) in the environment — never commit it — then rerun: celia runner connect');
+          process.exitCode = 1;
+          return;
+        }
+
+        console.log(`github repo: ${plan.owner}/${plan.repo}`);
+        const outcome = await githubRunner.run(plan.intent, { steps: plan.steps });
+        plan.steps.forEach((step, index) => {
+          const result = outcome.results[index];
+          console.log(
+            `${step.action}: ${result?.status ?? 'missing'} ${summarizeGithubOutput(result?.output)}`,
+          );
+        });
+        console.log(`verdict: ${outcome.verdict}`);
+        console.log(`usage: ${JSON.stringify(outcome.usage.total)}`);
+        console.log(`evidence: ${outcome.verification.evidence.length} item(s)`);
+        if (outcome.verdict !== 'PASSED') process.exitCode = 1;
+        return;
+      } catch (err) {
+        console.error(err instanceof Error ? err.message : String(err));
+        process.exitCode = 1;
+        return;
+      } finally {
+        approvalSession?.close();
+      }
     }
 
     case 'ledger': {
@@ -63,13 +126,39 @@ async function main(): Promise<void> {
       return;
     }
 
-    case 'runner':
+    case 'runner': {
       if (args[0] === 'start') {
         console.log('celia runner started (local) — $0');
         return;
       }
-      console.log('celia runner install | connect | start');
+      if (args[0] === 'connect') {
+        // تحقق حقيقي: مصادقة GitHub + صلاحية المستودع وصلاحيات الاعتماد عليه — دون طباعة السر أبدًا.
+        const rest = args.slice(1);
+        const json = rest.includes('--json');
+        const repoArg = rest.find((a) => !a.startsWith('--'));
+        const fromEnv = githubTransportFromEnv();
+        if (!fromEnv) {
+          console.log('github: NOT CONNECTED — no credential found');
+          console.log('set GH_TOKEN (or GITHUB_TOKEN) in the environment — never commit it — then rerun: celia runner connect [owner/repo]');
+          process.exitCode = 1;
+          return;
+        }
+        let target: { owner: string; repo: string };
+        try {
+          target = parseOwnerRepo(repoArg);
+        } catch (err) {
+          console.error(err instanceof Error ? err.message : String(err));
+          process.exitCode = 1;
+          return;
+        }
+        const report = await verifyGithubConnection({ transport: fromEnv.transport, ...target });
+        console.log(json ? JSON.stringify(report, null, 2) : formatConnectionReport(report, fromEnv.source));
+        if (!report.connected) process.exitCode = 1;
+        return;
+      }
+      console.log('usage: celia runner <start|connect [owner/repo] [--json]>');
       return;
+    }
 
     case 'ownership':
       if (args[0] === 'prove') {
@@ -84,7 +173,7 @@ async function main(): Promise<void> {
       return;
 
     default:
-      console.log('usage: celia <mode|run|ledger|tools|models|runner|health|safe-mode|emergency-lock|ownership prove>');
+      console.log('usage: celia <mode|run [--github [--repo o/r] [--steps JSON]]|ledger|tools|models|runner connect|health|safe-mode|emergency-lock|ownership prove>');
   }
 }
 
